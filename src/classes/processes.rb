@@ -48,5 +48,37 @@ class connections
 	def write
 		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['processes_prefix']} N:#{@@data['processes']}]
 	end
+
+	def graph(timeframe)
+		@time = timeframe
+		
+		if(@time == "day")
+			@start = -86400
+			@suffix = "day"
+		elsif(@time == "week")
+			@start = -604800
+			@suffix = "week"
+		elsif(@time == "month")
+			@start = -2678400
+			@suffix = "month"
+		elsif(@time == "year")
+			@start = -31536000
+			@suffix = "year"
+		end
+
+		%[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix} -i \
+			--start #{@start} -a PNG -t "Number of processes" \
+			--vertical-label "processes" -w 600 -h 150 \
+			--color SHADEA#ffffff --color SHADEB#ffffff \
+			--color BACK#ffffff \
+			DEF:processes=$DBDIR$PROC_PREFIX.rrd:processes:AVERAGE \
+			LINE1:processes#ff0000:"Process count" \
+			VDEF:auswertung1=processes,AVERAGE \
+			GPRINT:auswertung1:"Average process count\: %lg" \
+			DEF:maxaus=$DBDIR$PROC_PREFIX.rrd:processes:MAX \
+			VDEF:maxaus1=maxaus,MAXIMUM \
+			GPRINT:maxaus1:"Maximum process count\: %lg\j"]
+	end
 end
 

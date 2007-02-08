@@ -56,5 +56,41 @@ class connections
 	def write
 		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['connections_prefix']} N:#{@@data['tcp']}:#{@@data['udp']}]
 	end
+
+	def graph(timeframe)
+		@time = timeframe
+		
+		if(@time == "day")
+			@start = -86400
+			@suffix = "day"
+		elsif(@time == "week")
+			@start = -604800
+			@suffix = "week"
+		elsif(@time == "month")
+			@start = -2678400
+			@suffix = "month"
+		elsif(@time == "year")
+			@start = -31536000
+			@suffix = "year"
+		end
+
+		%[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix} -i \
+			--start #{@start} -a PNG -t "Network connections" \
+			--vertical-label "Connections" -w 600 -h 150 \
+			--color SHADEA#ffffff --color SHADEB#ffffff \
+			--color BACK#ffffff \
+			COMMENT:"\t\t   Current\t\t  Average\t\t Maximum\n" \
+			DEF:tcp=$DBDIR$CON_PREFIX.rrd:tcp:AVERAGE \
+			LINE1:tcp#ff0000:"TCP \
+			VDEF:tcplast=tcp,LAST GPRINT:tcplast:" %12.3lf " \
+			VDEF:tcpavg=tcp,AVERAGE GPRINT:tcpavg:" %12.3lf " \
+			VDEF:tcpmax=tcp,MAXIMUM GPRINT:tcpmax:" %12.3lf \n" \
+			DEF:udp=$DBDIR$CON_PREFIX.rrd:udp:AVERAGE \
+			LINE1:udp#0000ff:"UDP " \
+			VDEF:udplast=udp,LAST GPRINT:udplast:" %12.3lf " \
+			VDEF:udpavg=udp,AVERAGE GPRINT:udpavg:" %12.3lf " \
+			VDEF:udpmax=udp,MAXIMUM GPRINT:udpmax:" %12.3lf "] 
+	end
 end
 

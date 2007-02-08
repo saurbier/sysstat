@@ -37,7 +37,7 @@ class connections
 	end
 
 	def get
-		@@config["interfaces"].split().each do |interface|
+		@@config["net_interfaces"].split().each do |interface|
 			if(@config['os'] == "freebsd6")
 				@output = %x[netstat -ib]
 				@output.each do |line|
@@ -64,6 +64,48 @@ class connections
 	def write
 		@@config["interfaces"].split().each do |interface|
 			%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd N:#{@@data['#{interface}']['in']}:#{@@data['#{interface}']['out']}]
+		end
+	end
+
+	def graph(timeframe)
+		@time = timeframe
+		
+		if(@time == "day")
+			@start = -86400
+			@suffix = "day"
+		elsif(@time == "week")
+			@start = -604800
+			@suffix = "week"
+		elsif(@time == "month")
+			@start = -2678400
+			@suffix = "month"
+		elsif(@time == "year")
+			@start = -31536000
+			@suffix = "year"
+		end
+
+		@@config["interfaces"].split().each do |interface|
+		    %[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix} \
+			-i --start #{@start} -a PNG \
+			-t "Network Interface #{interface}" \
+			--vertical-label "Bits/s" -w 600 -h 150 \
+			--color SHADEA#ffffff --color SHADEB#ffffff \
+			--color BACK#ffffff \
+			COMMENT:"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\n" \
+			DEF:r=$DBDIR$NET_PREFIX-$IF.rrd:in:AVERAGE \
+			CDEF:rx=r,8,* AREA:rx#00dd00:"Inbound " \
+			VDEF:rxlast=rx,LAST GPRINT:rxlast:" %12.3lf %s" \
+			VDEF:rxave=rx,AVERAGE GPRINT:rxave:"%12.3lf %s" \
+			VDEF:rxmax=rx,MAXIMUM GPRINT:rxmax:"%12.3lf %s" \
+			VDEF:rxtotal=r,TOTAL GPRINT:rxtotal:"%12.1lf %sb\n" \
+			DEF:t=$DBDIR$NET_PREFIX-$IF.rrd:out:AVERAGE \
+			CDEF:txa=t,-8,* CDEF:tx=t,8,* \
+			AREA:txa#0000ff:"Outbound " \
+			VDEF:txlast=tx,LAST GPRINT:txlast:"%12.3lf %s" \
+			VDEF:txave=tx,AVERAGE GPRINT:txave:"%12.3lf %s" \
+			VDEF:txmax=tx,MAXIMUM GPRINT:txmax:"%12.3lf %s" \
+			VDEF:txtotal=t,TOTAL GPRINT:txtotal:"%12.1lf %sb"]
 		end
 	end
 end

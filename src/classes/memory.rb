@@ -60,5 +60,46 @@ class connections
 	def write
 		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']} N:#{@@data['value']}]
 	end
+
+	def graph(timeframe)
+		@time = timeframe
+		
+		if(@time == "day")
+			@start = -86400
+			@suffix = "day"
+		elsif(@time == "week")
+			@start = -604800
+			@suffix = "week"
+		elsif(@time == "month")
+			@start = -2678400
+			@suffix = "month"
+		elsif(@time == "year")
+			@start = -31536000
+			@suffix = "year"
+		end
+
+		%[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['memory_prefix']}-#{@suffix} -i \
+			--start #{@start} -a PNG -t "RAM and Swap" \
+			--vertical-label "Bytes" -w 600 -h 150 \
+			--color SHADEA#ffffff --color SHADEB#ffffff \
+			--color BACK#ffffff \
+			DEF:ramk=$DBDIR$RAM_PREFIX.rrd:ram:AVERAGE \
+			DEF:swapk=$DBDIR$RAM_PREFIX.rrd:swap:AVERAGE \
+			CDEF:ram=ramk,1024,* CDEF:swap=swapk,1024,* \
+			CDEF:bram=$RAM_TOTAL,ram,- \
+			CDEF:bswapk=$RAM_SWAPTOTAL,swapk,- \
+			CDEF:bswap=bswapk,1024,* \
+			VDEF:bramlast=bram,LAST VDEF:ramlast=ram,LAST \
+			VDEF:bswaplast=bswap,LAST VDEF:swaplast=swap,LAST \
+			AREA:bram#99ffff:"used RAM\: " \
+			GPRINT:bramlast:"%4.3lf %sB " \
+			LINE1:ram#ff0000:"free RAM\: " \
+			GPRINT:ramlast:"%4.3lf %sB\n" \
+			LINE1:bswap#000000:"used SWAP\: " \
+			GPRINT:bswaplast:"%4.3lf %sB " \
+			LINE1:swap#006600:"free SWAP\: " \
+			GPRINT:swaplast:"%4.3lf %sB"]
+	end
 end
 
