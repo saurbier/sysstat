@@ -36,6 +36,17 @@ class connections
 		@@data['processes'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['processes_prefix']}.rrd \
+			--step #{@@config['step']} \
+			DS:processes:GAUGE:120:0:U \
+			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
+			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
+			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	end
+
 	def get
 		@@data['processes'] = 0
 
@@ -46,7 +57,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['processes_prefix']} N:#{@@data['processes']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['processes_prefix']}.rrd N:#{@@data['processes']}]
 	end
 
 	def graph(timeframe)
@@ -67,7 +78,7 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix} -i \
+			#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "Number of processes" \
 			--vertical-label "processes" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \

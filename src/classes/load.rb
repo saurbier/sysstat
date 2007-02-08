@@ -38,6 +38,19 @@ class connections
 		@@data['15min'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['load_prefix']}.rrd \
+			--step #{@@config['step']} DS:tcp:GAUGE:120:0:U \
+			DS:load1:GAUGE:120:0:U \
+			DS:load5:GAUGE:120:0:U \
+			DS:load15:GAUGE:120:0:U \
+			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
+			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
+			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	end
+
 	def get
 		if(@@config['os'] == "freebsd6")
 			@output = %x[sysctl vm.loadavg]
@@ -61,7 +74,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['load_prefix']} N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['load_prefix']}.rrd N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}]
 	end
 
 	def graph(timeframe)
@@ -82,7 +95,7 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix} -i \
+			#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "Load Average" \
 			--vertical-label "Load" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \

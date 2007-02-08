@@ -6,6 +6,10 @@
 # One of freebsd6, linux2.6
 @config['os'] = "OS"
 
+## Time between data gathering steps
+# (in seconds)
+@config['steps'] = "300"
+
 
 ### Paths 
 ## Full path of rrdtool 1.2.x

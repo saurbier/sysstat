@@ -37,6 +37,16 @@ class connections
 		@@data['fswap'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['memory_prefix']}.rrd \
+			--step #{@@config['step']} \
+			DS:ram:GAUGE:120:0:U \
+			DS:swap:GAUGE:120:0:U \
+			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760]
+	end
+
 	def get
 		if(@@config['os'] == "freebsd6")
 			@output = %x[vmstat]
@@ -58,7 +68,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']} N:#{@@data['value']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']}.rrd N:#{@@data['value']}]
 	end
 
 	def graph(timeframe)
@@ -79,7 +89,7 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['memory_prefix']}-#{@suffix} -i \
+			#{@@config['graphdir']}/#{@@config['memory_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "RAM and Swap" \
 			--vertical-label "Bytes" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \

@@ -38,6 +38,18 @@ class connections
 		@@data['user'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['cpu_prefix']}.rrd \
+			--step #{@@config['step']} DS:usr:GAUGE:120:0:U \
+			DS:sys:GAUGE:120:0:U \
+			DS:idl:GAUGE:120:0:U \
+			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
+			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
+			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	end
+
 	def get
 		@@data['idle'] = 0
 		@@data['system'] = 0
@@ -63,7 +75,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['cpu_prefix']} N:#{@@data['user']}:#{@@data['system']}:#{@@data['idle']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['cpu_prefix']}.rrd N:#{@@data['user']}:#{@@data['system']}:#{@@data['idle']}]
 	end
 
 	def graph(timeframe)
@@ -84,7 +96,7 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['cpu_prefix']}-#{@suffix} -i \
+			#{@@config['graphdir']}/#{@@config['cpu_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "CPU usage" \
 			--vertical-label "Percent" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \

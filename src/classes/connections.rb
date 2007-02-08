@@ -37,6 +37,17 @@ class connections
 		@@data['tcp'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['connections_prefix']}.rrd \
+			--step #{@@config['step']} DS:tcp:GAUGE:120:0:U \
+			DS:udp:GAUGE:120:0:U \
+			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
+			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
+			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	end
+
 	def get
 		@@data['tcp'] = 0
 		@@data['udp'] = 0
@@ -54,7 +65,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['connections_prefix']} N:#{@@data['tcp']}:#{@@data['udp']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['connections_prefix']}.rrd N:#{@@data['tcp']}:#{@@data['udp']}]
 	end
 
 	def graph(timeframe)
@@ -75,7 +86,7 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix} -i \
+			#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "Network connections" \
 			--vertical-label "Connections" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \

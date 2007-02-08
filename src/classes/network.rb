@@ -36,6 +36,20 @@ class connections
 		@@data['value'] = 0
 	end
 
+	def mkdb
+		@@config["net_interfaces"].split().each do |interface|
+			%x[#{@@config['rrdtool']} create \
+				#{@@config['dbdir']}/@@config['network_prefix']}-#{interface}.rrd \
+				--step #{@@config['step']} \
+				DS:in:COUNTER:120:0:U \
+				DS:out:COUNTER:120:0:U \
+				RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
+				RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
+				RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
+				RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+		end
+	end
+
 	def get
 		@@config["net_interfaces"].split().each do |interface|
 			if(@config['os'] == "freebsd6")
@@ -62,7 +76,7 @@ class connections
 	end
 
 	def write
-		@@config["interfaces"].split().each do |interface|
+		@@config["net_interfaces"].split().each do |interface|
 			%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd N:#{@@data['#{interface}']['in']}:#{@@data['#{interface}']['out']}]
 		end
 	end
@@ -86,7 +100,7 @@ class connections
 
 		@@config["interfaces"].split().each do |interface|
 		    %[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix} \
+			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.rrd \
 			-i --start #{@start} -a PNG \
 			-t "Network Interface #{interface}" \
 			--vertical-label "Bits/s" -w 600 -h 150 \
