@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!RUBYPATH
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.

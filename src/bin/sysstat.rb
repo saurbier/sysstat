@@ -32,9 +32,41 @@ $: << 'INSTALLDIR/config' << 'INSTALLDIR/lib'
 # Load configuration
 require 'sysstat-conf.rb'
 
-# Load modules and initialize them
+@data_threads = Hash.new
+@graph_threads = Hash.new
+
 @config['modules'].split().each do |module|
+	# Load modules and initialize them
 	require 'module'
 	@#{module} = #{module}.new
+
+	# Check if databases exist and create if needed
+	@#{module}.mkdb
+
+	# Threads for getting data and writing to database
+	@data_threads["#{module}"] = Thread.new(#{module}) { 
+		|mymodule|
+		loop do
+			@#{mymodule}.get
+			@#{mymodule}.write
+			sleep @config{"step"}
+		end
+	}
+
+	graph_threads["#{module}"] = Thread.new(#{module}) {
+		|mymodule|
+		loop do
+			@#{mymodule}.graph
+			sleep @config{"graph_interval"}
+		end
+	}
+
+end
+
+data_threads.each do |thread|
+	thread.join
+end
+graph_threads.each do |thread|
+	thread.join
 end
 

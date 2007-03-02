@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!RUBYPATH
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -36,6 +36,13 @@ class connections
 		@@data['value'] = 0
 	end
 
+	def mkdb
+		%x[#{@@config['rrdtool']} create \
+			#{@@config['dbdir']}/@@config['load_prefix']}.rrd \
+			--step #{@@config['step']} \
+		]
+	end
+
 	def get
 		if(@@config['os'] == "freebsd6")
 			@output = %x[#{@@config['src_program']}]
@@ -53,5 +60,30 @@ class connections
 	def write
 		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']} N:#{@@data['value']}]
 	end
+
+	def graph(timeframe)
+		@time = timeframe
+		
+		if(@time == "day")
+			@start = -86400
+			@suffix = "day"
+		elsif(@time == "week")
+			@start = -604800
+			@suffix = "week"
+		elsif(@time == "month")
+			@start = -2678400
+			@suffix = "month"
+		elsif(@time == "year")
+			@start = -31536000
+			@suffix = "year"
+		end
+
+		%[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['_prefix']}-#{@suffix}.rrd -i \
+			--start #{@start} -a PNG -t "" \
+			--vertical-label "" -w 600 -h 150 \
+			--color SHADEA#ffffff --color SHADEB#ffffff \
+			--color BACK#ffffff \
+		]
 end
 
