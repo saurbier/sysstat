@@ -1,4 +1,4 @@
-#!RUBYPATH
+#!/usr/local/bin/ruby -w
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -44,22 +44,53 @@ require 'sysstat-conf.rb'
 	# Check if databases exist and create if needed
 	@modules[module].mkdb
 
-	# Threads for getting data and writing to database
-	@data_childs[module] = fork do 
-		loop do
-			@modules[module].get
-			@modules[module].write
-			sleep @config{"step"}
-		end
-	end
+end
 
-	@graph_childs[module] = fork do
-		loop do
-			@modules[module].graph
-			sleep @config{"graph_interval"}
-		end
-	end
+# Childs for getting data and writing to database
+@childs["data"] = Process.fork do 
+	Process.trap("SIGHUP") { Process.exit!(0) }
+	Process.trap("SIGTERM") { Process.exit!(0) }
 
+	time = Time.now
+
+	loop do
+		if(time <= Time.now)
+			time = Time.now + @config['steps']
+			@config['modules'].split().each do |module|
+				@modules[module].get
+				@modules[module].write
+			end
+		end
+		sleep 30
+	end
+end
+
+# Childs for creating graphics 
+@childs["graph"] = Process.fork do 
+	Process.trap("SIGHUP") { Process.exit!(0) }
+	Process.trap("SIGTERM") { Process.exit!(0) }
+
+	time = Time.now
+
+	loop do
+		if(time <= Time.now)
+			time = Time.now + @config['graph_interval']
+			@config['modules'].split().each do |module|
+				@modules[module].graph
+			end
+		end
+		sleep 30
+	end
+end
+
+
+Process.trap("SIGHUP") do
+	@data_childs.each do |pid|
+		Process.kill("SIGHUP", pid)
+	end
+	@data_childs.each do |pid|
+		Process.kill("SIGHUP", pid)
+	end
 end
 
 Process.wait

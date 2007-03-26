@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!/usr/local/bin/ruby -w
 
 @config = Hash.new
 
@@ -8,7 +8,11 @@
 
 ## Time between data gathering steps
 # (in seconds)
-@config['steps'] = "300"
+@config['steps'] = 300
+
+## Time between graph creatings
+# (in seconds)
+@config['graph_interval'] = 900
 
 
 ### Paths 
