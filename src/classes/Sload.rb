@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 
-class connections
+class Sload
 	@@config = 0
 	@@data = Hash.new 
 
@@ -40,9 +40,8 @@ class connections
 
 	def mkdb
 		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/@@config['load_prefix']}.rrd \
-			--step #{@@config['step']} DS:tcp:GAUGE:120:0:U \
-			DS:load1:GAUGE:120:0:U \
+			#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd \
+			--step #{@@config['step']} DS:load1:GAUGE:120:0:U \
 			DS:load5:GAUGE:120:0:U \
 			DS:load15:GAUGE:120:0:U \
 			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
@@ -53,7 +52,7 @@ class connections
 
 	def get
 		if(@@config['os'] == "freebsd6")
-			@output = %x[sysctl vm.loadavg]
+			@output = %x[LANG="en_US.8859-15" sysctl vm.loadavg]
 			@output.each do |line|
 				linea = line.split
 				@@data['1min'] = linea[2]
@@ -74,7 +73,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['load_prefix']}.rrd N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['load_prefix']}.rrd N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}]
 	end
 
 	def graph(timeframe)

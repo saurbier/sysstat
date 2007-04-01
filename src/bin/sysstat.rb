@@ -30,35 +30,34 @@
 $: << 'INSTALLDIR/config' << 'INSTALLDIR/lib'
 
 # Load configuration
-require 'sysstat-conf.rb'
+require 'sysstat.conf'
 
-@module = Hash.new
-@data_childs = Hash.new
-@graph_childs = Hash.new
+@modules = Hash.new
+@childs = Hash.new
 
-@config['modules'].split().each do |module|
+@config['modules'].split().each do |modul|
 	# Load modules and initialize them
-	require "#{module}.rb"
-	@modules[module] = Object.const_get(module).new
+	require "#{modul}.rb"
+	@modules[modul] = Object.const_get(modul).new(@config)
 
 	# Check if databases exist and create if needed
-	@modules[module].mkdb
+	@modules[modul].mkdb
 
 end
 
 # Childs for getting data and writing to database
 @childs["data"] = Process.fork do 
-	Process.trap("SIGHUP") { Process.exit!(0) }
-	Process.trap("SIGTERM") { Process.exit!(0) }
+	trap("SIGHUP") { Process.exit!(0) }
+	trap("SIGTERM") { Process.exit!(0) }
 
 	time = Time.now
 
 	loop do
 		if(time <= Time.now)
-			time = Time.now + @config['steps']
-			@config['modules'].split().each do |module|
-				@modules[module].get
-				@modules[module].write
+			time = Time.now + @config['step']
+			@config['modules'].split().each do |modul|
+				@modules[modul].get
+				@modules[modul].write
 			end
 		end
 		sleep 30
@@ -67,16 +66,16 @@ end
 
 # Childs for creating graphics 
 @childs["graph"] = Process.fork do 
-	Process.trap("SIGHUP") { Process.exit!(0) }
-	Process.trap("SIGTERM") { Process.exit!(0) }
+	trap("SIGHUP") { Process.exit!(0) }
+	trap("SIGTERM") { Process.exit!(0) }
 
 	time = Time.now
 
 	loop do
 		if(time <= Time.now)
 			time = Time.now + @config['graph_interval']
-			@config['modules'].split().each do |module|
-				@modules[module].graph
+			@config['modules'].split().each do |modul|
+				@modules[modul].graph("day")
 			end
 		end
 		sleep 30
@@ -84,11 +83,8 @@ end
 end
 
 
-Process.trap("SIGHUP") do
-	@data_childs.each do |pid|
-		Process.kill("SIGHUP", pid)
-	end
-	@data_childs.each do |pid|
+trap("SIGHUP") do
+	@childs.each do |pid|
 		Process.kill("SIGHUP", pid)
 	end
 end

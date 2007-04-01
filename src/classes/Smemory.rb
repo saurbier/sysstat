@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 
-class connections
+class Smemory
 	@@config = 0
 	@@data = Hash.new 
 
@@ -39,7 +39,7 @@ class connections
 
 	def mkdb
 		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/@@config['memory_prefix']}.rrd \
+			#{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd \
 			--step #{@@config['step']} \
 			DS:ram:GAUGE:120:0:U \
 			DS:swap:GAUGE:120:0:U \
@@ -68,7 +68,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']}.rrd N:#{@@data['value']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd N:#{@@data['fram']}:#{@@data['fswap']}]
 	end
 
 	def graph(timeframe)

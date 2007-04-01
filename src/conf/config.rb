@@ -8,7 +8,7 @@
 
 ## Time between data gathering steps
 # (in seconds)
-@config['steps'] = 300
+@config['step'] = 300
 
 ## Time between graph creatings
 # (in seconds)

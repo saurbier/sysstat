@@ -27,23 +27,21 @@
 # SUCH DAMAGE.
 
 
-class connections
+class Sconnections
 	@@config = 0
 	@@data = Hash.new 
 
 	def initialize(config)
 		@@config = config
-		@@data['idle'] = 0
-		@@data['system'] = 0
-		@@data['user'] = 0
+		@@data['udp'] = 0
+		@@data['tcp'] = 0
 	end
 
 	def mkdb
 		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/@@config['cpu_prefix']}.rrd \
-			--step #{@@config['step']} DS:usr:GAUGE:120:0:U \
-			DS:sys:GAUGE:120:0:U \
-			DS:idl:GAUGE:120:0:U \
+			#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd \
+			--step #{@@config['step']} DS:tcp:GAUGE:120:0:U \
+			DS:udp:GAUGE:120:0:U \
 			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
 			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
 			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
@@ -51,31 +49,23 @@ class connections
 	end
 
 	def get
-		@@data['idle'] = 0
-		@@data['system'] = 0
-		@@data['user'] = 0
+		@@data['tcp'] = 0
+		@@data['udp'] = 0
 
-		if(@@config['os'] == "freebsd6")
-			@output = %x[vmstat -p proc]
-			@outpu.each do |line|
-				linea = line.split
-				@@data['idle'] = linea[16]
-				@@data['system'] = linea[15]
-				@@data['user'] = linea[14]
-			end
-		elsif(@@config['os'] == "linux2.6")
-			@output = %x[vmstat]
-			@outpu.each do |line|
-				linea = line.split
-				@@data['idle'] = linea[14]
-				@@data['system'] = linea[13]
-				@@data['user'] = linea[12]
+		if(@@config['os'] == "freebsd6" || @@config['os'] == "linux2.6")
+			@output = %x[netstat -n]
+			@output.each do |line|
+				if(line =~ /tcp/)
+					@@data['tcp'] += 1
+				elsif(line =~ /udp/)
+					@@data['udp'] += 1
+				end
 			end
 		end
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['cpu_prefix']}.rrd N:#{@@data['user']}:#{@@data['system']}:#{@@data['idle']}]
+		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd N:#{@@data['tcp']}:#{@@data['udp']}]
 	end
 
 	def graph(timeframe)
@@ -96,26 +86,22 @@ class connections
 		end
 
 		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['cpu_prefix']}-#{@suffix}.rrd -i \
-			--start #{@start} -a PNG -t "CPU usage" \
-			--vertical-label "Percent" -w 600 -h 150 \
+			#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix}.png -i \
+			--start #{@start} -a PNG -t "Network connections" \
+			--vertical-label "Connections" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
 			--color BACK#ffffff \
-			COMMENT:"\t   Current\t   Average\t    Maximum\n" \
-			DEF:usr=$DBDIR$CPU_PREFIX.rrd:usr:AVERAGE \
-			DEF:sys=$DBDIR$CPU_PREFIX.rrd:sys:AVERAGE \
-			DEF:idl=$DBDIR$CPU_PREFIX.rrd:idl:AVERAGE \
-			LINE1:idl#00ff00:"Idle   " \
-			VDEF:idllast=idl,LAST GPRINT:idllast:"%3.0lf%%" \
-			DEF:idlavg=idl,AVERAGE GPRINT:idlavg:"\t%3.0lf%%" \
-			VDEF:idlmax=idl,MAXIMUM GPRINT:idlmax:"\t%3.0lf%%\n" \
-			LINE1:sys#0000ff:"System " \
-			VDEF:syslast=sys,LAST GPRINT:syslast:"%3.0lf%%" \
-			VDEF:sysavg=sys,AVERAGE GPRINT:sysavg:"\t%3.0lf%%" \
-			VDEF:sysmax=sys,MAXIMUM GPRINT:sysmax:"\t%3.0lf%%\n" \
-			LINE1:usr#ff0000:"User   " \
-			VDEF:usrlast=usr,LAST GPRINT:usrlast:"%3.0lf%%" \
-			VDEF:usravg=usr,AVERAGE GPRINT:usravg:"\t%3.0lf%%" \
-			VDEF:usrmax=usr,MAXIMUM GPRINT:usrmax:"\t%3.0lf%%\n"] 
+			COMMENT:"\t\t   Current\t\t  Average\t\t Maximum\n" \
+			DEF:tcp=#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd:tcp:AVERAGE \
+			LINE1:tcp#ff0000:"TCP \
+			VDEF:tcplast=tcp,LAST GPRINT:tcplast:" %12.3lf " \
+			VDEF:tcpavg=tcp,AVERAGE GPRINT:tcpavg:" %12.3lf " \
+			VDEF:tcpmax=tcp,MAXIMUM GPRINT:tcpmax:" %12.3lf \n" \
+			DEF:udp=#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd:udp:AVERAGE \
+			LINE1:udp#0000ff:"UDP " \
+			VDEF:udplast=udp,LAST GPRINT:udplast:" %12.3lf " \
+			VDEF:udpavg=udp,AVERAGE GPRINT:udpavg:" %12.3lf " \
+			VDEF:udpmax=udp,MAXIMUM GPRINT:udpmax:" %12.3lf "] 
 	end
 end
+

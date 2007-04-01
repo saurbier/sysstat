@@ -27,19 +27,23 @@
 # SUCH DAMAGE.
 
 
-class connections
+class Snetwork
 	@@config = 0
 	@@data = Hash.new 
 
 	def initialize(config)
 		@@config = config
-		@@data['value'] = 0
+		@@config["net_interfaces"].split().each do |interface|
+			@@data[interface] = Hash.new
+			@@data[interface]['in'] = 0
+			@@data[interface]['out'] = 0
+		end
 	end
 
 	def mkdb
 		@@config["net_interfaces"].split().each do |interface|
 			%x[#{@@config['rrdtool']} create \
-				#{@@config['dbdir']}/@@config['network_prefix']}-#{interface}.rrd \
+				#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd \
 				--step #{@@config['step']} \
 				DS:in:COUNTER:120:0:U \
 				DS:out:COUNTER:120:0:U \
@@ -52,17 +56,17 @@ class connections
 
 	def get
 		@@config["net_interfaces"].split().each do |interface|
-			if(@config['os'] == "freebsd6")
+			if(@@config['os'] == "freebsd6")
 				@output = %x[netstat -ib]
 				@output.each do |line|
-					if(line =~ /interface/ 
-					   and line =~ /Link/)
+					regex = Regexp.new(interface)
+					if(line =~ regex and line =~ /Link/)
 						linea = line.split()
-						@@data[interface]["in"] = linea[6]
-						@@data[interface]["out"] = linea[9]
+						@@data[interface]["in"] = line.split()[6]
+						@@data[interface]["out"] = line.split()[9]
 					end
 				end
-			elsif(@config['os'] == "linux2.6")
+			elsif(@@config['os'] == "linux2.6")
 				@output = %x[ifconfig #{interface}]
 				@output.each do |line|
 					if(line =~ /bytes/) 
@@ -77,37 +81,35 @@ class connections
 
 	def write
 		@@config["net_interfaces"].split().each do |interface|
-			%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd N:#{@@data['#{interface}']['in']}:#{@@data['#{interface}']['out']}]
+			%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd N:#{@@data[interface]['in']}:#{@@data[interface]['out']}]
 		end
 	end
 
-	def graph(timeframe)
-		@time = timeframe
-		
-		if(@time == "day")
+	def graph(time)
+		if(time == "day")
 			@start = -86400
 			@suffix = "day"
-		elsif(@time == "week")
+		elsif(time == "week")
 			@start = -604800
 			@suffix = "week"
-		elsif(@time == "month")
+		elsif(time == "month")
 			@start = -2678400
 			@suffix = "month"
-		elsif(@time == "year")
+		elsif(time == "year")
 			@start = -31536000
 			@suffix = "year"
 		end
 
-		@@config["interfaces"].split().each do |interface|
+		@@config["net_interfaces"].split().each do |interface|
 		    %[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.rrd \
+			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png \
 			-i --start #{@start} -a PNG \
 			-t "Network Interface #{interface}" \
 			--vertical-label "Bits/s" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
 			--color BACK#ffffff \
 			COMMENT:"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\n" \
-			DEF:r=$DBDIR$NET_PREFIX-$IF.rrd:in:AVERAGE \
+			DEF:r=#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd:in:AVERAGE \
 			CDEF:rx=r,8,* AREA:rx#00dd00:"Inbound " \
 			VDEF:rxlast=rx,LAST GPRINT:rxlast:" %12.3lf %s" \
 			VDEF:rxave=rx,AVERAGE GPRINT:rxave:"%12.3lf %s" \
