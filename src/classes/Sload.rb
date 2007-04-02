@@ -41,9 +41,10 @@ class Sload
 	def mkdb
 		%x[#{@@config['rrdtool']} create \
 			#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd \
-			--step #{@@config['step']} DS:load1:GAUGE:120:0:U \
-			DS:load5:GAUGE:120:0:U \
-			DS:load15:GAUGE:120:0:U \
+			--step #{@@config['step']} \
+			DS:load1:GAUGE:#{@@config['step']+60}:0:U \
+			DS:load5:GAUGE:#{@@config['step']+60}:0:U \
+			DS:load15:GAUGE:#{@@config['step']+60}:0:U \
 			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
 			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
 			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
@@ -93,32 +94,32 @@ class Sload
 			@suffix = "year"
 		end
 
-		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix}.rrd -i \
+		%x[#{@@config['rrdtool']} graph \
+			#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix}.png -i \
 			--start #{@start} -a PNG -t "Load Average" \
 			--vertical-label "Load" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
 			--color BACK#ffffff \
-			COMMENT:"\t\t\t   Current\t     Average\t  Maximum\n" \
-			DEF:load1=$DBDIR$LOAD_PREFIX.rrd:load1:AVERAGE \
-			DEF:load5=$DBDIR$LOAD_PREFIX.rrd:load5:AVERAGE \
-			DEF:load15=$DBDIR$LOAD_PREFIX.rrd:load15:AVERAGE \
+			COMMENT:"\t\t\t   Current\t     Average\t  Maximum\\n" \
+			DEF:load1=#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd:load1:AVERAGE \
+			DEF:load5=#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd:load5:AVERAGE \
+			DEF:load15=#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd:load15:AVERAGE \
 			AREA:load1#ff0000:"1 minute  " LINE1:load1#ff0000:"" \
 			VDEF:load1l=load1,LAST GPRINT:load1l:"%12.2lf" \
 			VDEF:load1avg=load1,AVERAGE GPRINT:load1avg:"%12.2lf" \
 			VDEF:load1max=load1,MAXIMUM \
-			GPRINT:load1max:"%12.2lf\n" \
+			GPRINT:load1max:"%12.2lf\\n" \
 			AREA:load5#ff9900:"5 minutes " LINE1:load5#ff9900:"" \
 			VDEF:load5l=load5,LAST GPRINT:load5l:"%12.2lf" \
 			VDEF:load5avg=load5,AVERAGE GPRINT:load5avg:"%12.2lf" \
 			VDEF:load5max=load5,MAXIMUM \
-			GPRINT:load5max:"%12.2lf\n" \
+			GPRINT:load5max:"%12.2lf\\n" \
 			AREA:load15#ffff00:"15 minutes" \
 			VDEF:load15l=load15,LAST GPRINT:load15l:"%12.2lf" \
 			VDEF:load15avg=load15,AVERAGE \
 			GPRINT:load15avg:"%12.2lf" \
 			VDEF:load15max=load15,MAXIMUM \
-			GPRINT:load15max:"%12.2lf\n"]
+			GPRINT:load15max:"%12.2lf"]
 	end
 end
 

@@ -40,8 +40,9 @@ class Sconnections
 	def mkdb
 		%x[#{@@config['rrdtool']} create \
 			#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd \
-			--step #{@@config['step']} DS:tcp:GAUGE:120:0:U \
-			DS:udp:GAUGE:120:0:U \
+			--step #{@@config['step']} \
+			DS:tcp:GAUGE:#{@@config['step']+60}:0:U \
+			DS:udp:GAUGE:#{@@config['step']+60}:0:U \
 			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
 			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
 			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
@@ -85,23 +86,23 @@ class Sconnections
 			@suffix = "year"
 		end
 
-		%[#{@@config['rrdtool']} graph \
+		%x[#{@@config['rrdtool']} graph \
 			#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix}.png -i \
 			--start #{@start} -a PNG -t "Network connections" \
 			--vertical-label "Connections" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
 			--color BACK#ffffff \
-			COMMENT:"\t\t   Current\t\t  Average\t\t Maximum\n" \
+			COMMENT:"\t\t   Current\t\t  Average\t\t Maximum\\n" \
 			DEF:tcp=#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd:tcp:AVERAGE \
-			LINE1:tcp#ff0000:"TCP \
+			LINE1:tcp#ff0000:"TCP " \
 			VDEF:tcplast=tcp,LAST GPRINT:tcplast:" %12.3lf " \
 			VDEF:tcpavg=tcp,AVERAGE GPRINT:tcpavg:" %12.3lf " \
-			VDEF:tcpmax=tcp,MAXIMUM GPRINT:tcpmax:" %12.3lf \n" \
+			VDEF:tcpmax=tcp,MAXIMUM GPRINT:tcpmax:" %12.3lf \\n" \
 			DEF:udp=#{@@config['dbdir']}/#{@@config['connections_prefix']}.rrd:udp:AVERAGE \
 			LINE1:udp#0000ff:"UDP " \
 			VDEF:udplast=udp,LAST GPRINT:udplast:" %12.3lf " \
 			VDEF:udpavg=udp,AVERAGE GPRINT:udpavg:" %12.3lf " \
-			VDEF:udpmax=udp,MAXIMUM GPRINT:udpmax:" %12.3lf "] 
+			VDEF:udpmax=udp,MAXIMUM GPRINT:udpmax:" %12.3lf"] 
 	end
 end
 

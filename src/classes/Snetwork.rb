@@ -45,8 +45,8 @@ class Snetwork
 			%x[#{@@config['rrdtool']} create \
 				#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd \
 				--step #{@@config['step']} \
-				DS:in:COUNTER:120:0:U \
-				DS:out:COUNTER:120:0:U \
+				DS:in:COUNTER:#{@@config['step']+60}:0:U \
+				DS:out:COUNTER:#{@@config['step']+60}:0:U \
 				RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
 				RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
 				RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
@@ -101,21 +101,21 @@ class Snetwork
 		end
 
 		@@config["net_interfaces"].split().each do |interface|
-		    %[#{@@config['rrdtool']} graph \
+		    %x[#{@@config['rrdtool']} graph \
 			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png \
 			-i --start #{@start} -a PNG \
 			-t "Network Interface #{interface}" \
 			--vertical-label "Bits/s" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
 			--color BACK#ffffff \
-			COMMENT:"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\n" \
+			COMMENT:"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n" \
 			DEF:r=#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd:in:AVERAGE \
 			CDEF:rx=r,8,* AREA:rx#00dd00:"Inbound " \
 			VDEF:rxlast=rx,LAST GPRINT:rxlast:" %12.3lf %s" \
 			VDEF:rxave=rx,AVERAGE GPRINT:rxave:"%12.3lf %s" \
 			VDEF:rxmax=rx,MAXIMUM GPRINT:rxmax:"%12.3lf %s" \
-			VDEF:rxtotal=r,TOTAL GPRINT:rxtotal:"%12.1lf %sb\n" \
-			DEF:t=$DBDIR$NET_PREFIX-$IF.rrd:out:AVERAGE \
+			VDEF:rxtotal=r,TOTAL GPRINT:rxtotal:"%12.1lf %sb\\n" \
+			DEF:t=#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd:out:AVERAGE \
 			CDEF:txa=t,-8,* CDEF:tx=t,8,* \
 			AREA:txa#0000ff:"Outbound " \
 			VDEF:txlast=tx,LAST GPRINT:txlast:"%12.3lf %s" \

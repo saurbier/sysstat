@@ -27,10 +27,10 @@
 
 
 # Add configuration and lib directories to include path
-$: << 'INSTALLDIR/config' << 'INSTALLDIR/lib'
+$: << '/homes/saurbier/tmp/sysstat/lib'
 
 # Load configuration
-require 'sysstat.conf'
+require './sysstat.conf.rb'
 
 @modules = Hash.new
 @childs = Hash.new
@@ -41,7 +41,7 @@ require 'sysstat.conf'
 	@modules[modul] = Object.const_get(modul).new(@config)
 
 	# Check if databases exist and create if needed
-	@modules[modul].mkdb
+#	@modules[modul].mkdb
 
 end
 
@@ -76,6 +76,9 @@ end
 			time = Time.now + @config['graph_interval']
 			@config['modules'].split().each do |modul|
 				@modules[modul].graph("day")
+				@modules[modul].graph("week")
+				@modules[modul].graph("month")
+				@modules[modul].graph("year")
 			end
 		end
 		sleep 30
@@ -84,7 +87,10 @@ end
 
 
 trap("SIGHUP") do
-	@childs.each do |pid|
+	@data_childs.each do |pid|
+		Process.kill("SIGHUP", pid)
+	end
+	@data_childs.each do |pid|
 		Process.kill("SIGHUP", pid)
 	end
 end
