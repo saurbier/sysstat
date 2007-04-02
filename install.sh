@@ -27,4 +27,4 @@
 # SUCH DAMAGE.
 
 # Coming soon!
-
+echo "Sorry no install script until release!"
