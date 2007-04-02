@@ -1,0 +1,8 @@
+Prerelase - 20070402
+First running version
+	- Fixed graph creation
+	- Fixed heartbeat (120 vs. stepsize 300)
+	- Fixed filenames of graphics
+	- Fixed missing swap routines (FreeBSD)
+	- Updated graphic functions (from Sysstat 1.3)
+
