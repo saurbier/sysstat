@@ -4,7 +4,7 @@
 
 ## Operating System
 # One of freebsd6, linux2.6
-@config['os'] = "OS"
+@config['os'] = "freebsd6"
 
 ## Time between data gathering steps
 # (in seconds)
@@ -17,22 +17,23 @@
 
 ### Paths 
 ## Full path of rrdtool 1.2.x
-@config['rrdtool'] = "RRDTOOL"
+@config['rrdtool'] = "/usr/local/bin/rrdtool"
 
 ## Location of the installation
-@config['installdir'] = "INSTALLDIR"
+@config['installdir'] = "/homes/saurbier/tmp/sysstat"
 
 ## Location of the database files
-@config['dbdir'] = "DBDIR"
+@config['dbdir'] = "/homes/saurbier/tmp/sysstat/db"
 
 ## Output directory for the graphics
-@config['dbdir'] = "GRAPHDIR"
+#@config['graphdir'] = "/homes/saurbier/tmp/sysstat/output"
+@config['graphdir'] = "/vol/stats/xdf02_sysstat2"
 
 
 ### Modules
 ## Active modules
 # List of modules separated with a space
-@config['modules'] = "MODULES"
+@config['modules'] = "Sconnections Scpu Sload Smemory Snetwork Sprocesses"
 
 ## Prefix definitions for rrd and graph files
 @config['connections_prefix'] = "connections"
@@ -44,12 +45,12 @@
 
 ## Memory module specific configuration
 # Available RAM and Swap
-@config['mem_ramtotal'] = "RAMTOTAL"
-@config['mem_swaptotal'] = "SWAPTOTAL"
+@config['mem_ramtotal'] = 2147483648
+@config['mem_swaptotal'] = 4294967296
 
 ## Network module specific configuration
 # Graphed interfaces
-@config['net_interfaces']
+@config['net_interfaces'] = "xl0"
 
 
 ### Version
