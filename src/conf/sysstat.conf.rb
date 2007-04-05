@@ -1,33 +1,32 @@
-#!/usr/local/bin/ruby -w
+#!RUBYBIN
 
 @config = Hash.new
 
 ## Operating System
 # One of freebsd6, linux2.6
-@config['os'] = "freebsd6"
+@config['os'] = "OS"
 
 ## Time between data gathering steps
 # (in seconds)
-@config['step'] = 300
+@config['step'] = STEP
 
 ## Time between graph creatings
 # (in seconds)
-@config['graph_interval'] = 900
+@config['graph_interval'] = GSTEP
 
 
 ### Paths 
 ## Full path of rrdtool 1.2.x
-@config['rrdtool'] = "/usr/local/bin/rrdtool"
+@config['rrdtool'] = "RRDTOOLBIN"
 
 ## Location of the installation
-@config['installdir'] = "/homes/saurbier/tmp/sysstat"
+@config['installdir'] = "INSTALLDIR"
 
 ## Location of the database files
-@config['dbdir'] = "/homes/saurbier/tmp/sysstat/db"
+@config['dbdir'] = "DBDIR"
 
 ## Output directory for the graphics
-#@config['graphdir'] = "/homes/saurbier/tmp/sysstat/output"
-@config['graphdir'] = "/vol/stats/xdf02_sysstat2"
+@config['graphdir'] = "GRAPHDIR"
 
 
 ### Modules
@@ -45,12 +44,12 @@
 
 ## Memory module specific configuration
 # Available RAM and Swap
-@config['mem_ramtotal'] = 2147483648
-@config['mem_swaptotal'] = 4294967296
+@config['mem_ramtotal'] = RAM
+@config['mem_swaptotal'] = SWAP
 
 ## Network module specific configuration
 # Graphed interfaces
-@config['net_interfaces'] = "xl0"
+@config['net_interfaces'] = "INTERFACES"
 
 
 ### Version

@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby -w
+#!RUBYBIN
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -27,10 +27,10 @@
 
 
 # Add configuration and lib directories to include path
-$: << '/homes/saurbier/tmp/sysstat/lib'
+$: << 'INSTALLDIR/etc << 'INSTALLDIR/lib'
 
 # Load configuration
-require './sysstat.conf.rb'
+require 'sysstat.conf.rb'
 
 @modules = Hash.new
 @childs = Hash.new

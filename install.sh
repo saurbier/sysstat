@@ -26,5 +26,149 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# Coming soon!
-echo "Sorry no install script until release!"
+# Initialize variable with default values
+PREFIX=		"/usr/local/sysstat"
+GRAPHDIR=	"$PREFIX/output"
+DBDIR=		"$PREFIX/db"
+
+# Read arguments
+while getopts hI:O:P:s:S: ARGS; do
+	case $ARGS in
+		h)
+			# Display help
+			echo ""
+			echo "System statistics install-script"
+			echo ""
+			echo "Usage:"
+			echo " -h		Display this help screen"
+			echo " -I <list>	Interface list for network statistics"
+			echo "			(Space separated)"
+			echo " -O <path>	Where to write the statistics"
+			echo "			(Default: $PREFIX/output)"
+			echo " -P <path>	Install prefix"
+			echo "			(Default: /usr/local/sysstat)
+			echo " -s		Time in seconds between data gatherings."
+			echo " -S		Time in seconds between graph creations."
+			exit
+			;;
+		I)
+			INTERFACES=	"$OPTARG"
+			;;
+		O)
+			GRAPHDIR=	"$OPTARG"
+			;;
+		P)
+			PREFIX=		"$OPTARG"
+			;;
+		s)	
+			STEP=		$(($(($OPTARG / 60)) * 60))
+			;;
+		S)
+			GSTEP=		$(($(($OPTARG / 300)) * 300))
+	esac
+done
+
+# Prepare variables
+PREFIX=		$(echo $PREFIX | sed "s:*/$::")
+CONF=		"$PREFIX/etc/sysstat.conf.rb"
+DBDIR=		"$PREFIX/db"
+GRAPHDIR=	$(echo $GRAPHDIR | sed "s:*/$::")
+RUBYBIN=	"`which ruby` -w"
+
+if [ `uname -s` = "FreeBSD" ]; then
+	RAM=	"$(sysctl -n hw.physmem)"
+	SWAP=	"$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))"
+	OS=	"freebsd6"
+elif [ `uname -s` = "Linux" ]; then
+	RAM=	"$(($(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}') * 1024))
+	SWAP=	"$(($(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}') * 1024))
+	OS=	"linux2.6"
+fi
+
+
+# Create temporary files and directories
+mkdir -p tmp
+
+# Create configuration file
+cat src/conf/sysstat.conf.rb | \
+	sed "s:OS:$OS:" | \
+	sed "s:RUBYBIN:$RUBYBIN:" | \
+	sed "s:INSTALLDIR:$PREFIX:" | \
+	sed "s:GRAPHDIR:$GRAPHDIR:" | \
+	sed "s:DBDIR:$DBDIR:" | \
+	sed "s:STEP:$STEP:" | \
+	sed "s:GSTEP:$GSTEP:" | \
+	sed "s:INTERFACES:$INTERFACES:" | \
+	sed "s:RAM:$RAM:" | \
+	sed "s:SWAP:$SWAP:" > tmp/sysstat.conf.rb
+
+# Create daemon
+sed "s:CONF:$CONF:" src/bin/sysstat.rb | \
+	sed "s:RUBYBIN:$RUBYBIN:" > tmp/sysstat.rb
+
+# Create classes
+for i in $(ls src/classes/*.rb); do
+	sed "s:RUBYBIN:$RUBYBIN:" $i > tmp/$(basename $i)
+done
+
+# Create html files
+for i in $ls src/html/*.html); do
+	sed "s:HOSTNAME:$(hostname -s):g" $i > tmp/$(basename $i)
+done
+
+for i in $INTERFACES; do
+	sed "s:INTERFACE:$i:g" tmp/network.html > tmp/net-$i.html
+	INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"<img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>\n"
+done
+
+sed "s:NETWORK:$INDEXNET:" tmp/index.html > tmp/index.html.tmp
+mv tmp/index.html.tmp tmp/index.html
+
+rm tmp/network.html
+
+# Install files
+if [ `uname -s` = "FreeBSD" ]; then
+	install -d -o root -g wheel -m 755 $PREFIX
+	install -d -o root -g wheel -m 755 $PREFIX/bin
+	install -d -o root -g wheel -m 755 $PREFIX/etc
+	install -d -o root -g wheel -m 755 $PREFIX/db
+	install -d -o root -g wheel -m 755 $PREFIX/lib
+	install -S -o root -g wheel -m 644 tmp/sysstat.conf.rb $PREFIX/etc
+	for i in $(ls tmp/S*.rb); do
+		install -S -o root -g wheel -m 644 $i $PREFIX/lib
+	done
+	install -S -o root -g wheel -m 755 tmp/sysstat.rb $PREFIX/bin
+	install -d -o root -g wheel -m 755 $GRAPHDIR
+	for i in $(ls tmp/*.html); do
+		install -S -o root -g wheel -m 644 -i $GRAPHDIR
+	done
+elif [ `uname -s` = "Linux" ]; then
+	install -d -o root -g root -m 755 $PREFIX
+	install -d -o root -g root -m 755 $PREFIX/bin
+	install -d -o root -g root -m 755 $PREFIX/etc
+	install -d -o root -g root -m 755 $PREFIX/db
+	install -d -o root -g root -m 755 $PREFIX/lib
+	install -o root -g root -m 755 tmp/sysstat.rb $PREFIX/bin
+	install -o root -g root -m 644 tmp/sysstat.conf.rb $PREFIX/etc
+	for i in $(ls tmp/S*.rb); do
+		install -o root -g root -m 644 $i $PREFIX/lib
+	done
+	install -d -o root -g root -m 755 $GRAPHDIR
+	for i in $(ls tmp/*.html); do
+		install -o root -g root -m 644 -i $GRAPHDIR
+	done
+fi
+
+# Remove temporary files and directories
+rm -rf tmp/
+
+# Message
+cat <<EOF
+
+The Sysstat scripts are now installed.
+Please start the daemon with the supplied RC/Init script at:
+
+	$(echo $PREFIX/bin/sysstat.sh)
+
+EOF
+

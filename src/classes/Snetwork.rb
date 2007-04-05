@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby -w
+#!RUBYBIN
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
