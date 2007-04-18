@@ -26,73 +26,29 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 
 
-# Add configuration and lib directories to include path
-$: << 'INSTALLDIR/etc << 'INSTALLDIR/lib'
-
 # Load configuration
-require 'sysstat.conf.rb'
+require 'INSTALLDIR/etc/sysstat.conf.rb'
+
+# Add lib directories to include path
+$: << "#{@config['installdir']}/lib"
+
+# Load main functions
+require "Smain.rb"
 
 @modules = Hash.new
 @childs = Hash.new
 
-@config['modules'].split().each do |modul|
-	# Load modules and initialize them
-	require "#{modul}.rb"
-	@modules[modul] = Object.const_get(modul).new(@config)
-
-	# Check if databases exist and create if needed
-#	@modules[modul].mkdb
-
-end
-
-# Childs for getting data and writing to database
-@childs["data"] = Process.fork do 
-	trap("SIGHUP") { Process.exit!(0) }
-	trap("SIGTERM") { Process.exit!(0) }
-
-	time = Time.now
-
-	loop do
-		if(time <= Time.now)
-			time = Time.now + @config['step']
-			@config['modules'].split().each do |modul|
-				@modules[modul].get
-				@modules[modul].write
-			end
-		end
-		sleep 30
-	end
-end
-
-# Childs for creating graphics 
-@childs["graph"] = Process.fork do 
-	trap("SIGHUP") { Process.exit!(0) }
-	trap("SIGTERM") { Process.exit!(0) }
-
-	time = Time.now
-
-	loop do
-		if(time <= Time.now)
-			time = Time.now + @config['graph_interval']
-			@config['modules'].split().each do |modul|
-				@modules[modul].graph("day")
-				@modules[modul].graph("week")
-				@modules[modul].graph("month")
-				@modules[modul].graph("year")
-			end
-		end
-		sleep 30
-	end
-end
+initialize
+get_data
+create_graphs
 
 
 trap("SIGHUP") do
-	@data_childs.each do |pid|
-		Process.kill("SIGHUP", pid)
-	end
-	@data_childs.each do |pid|
-		Process.kill("SIGHUP", pid)
-	end
+	Process.kill("SIGHUP", @childs['graph'])
+	Process.kill("SIGHUP", @childs['data'])
+	require "#{@config['installdir']}/etc/sysstat.conf.rb"
+	get_data
+	create_graphs
 end
 
 Process.wait

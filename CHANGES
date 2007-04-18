@@ -1,4 +1,9 @@
-Prerelase - 20070402
+Prerelease - 20070414
+	- Createt Smain.rb
+	- Moved modules from src/classes to src/modules
+	-
+
+Prerelease - 20070402
 First running version
 	- Fixed graph creation
 	- Fixed heartbeat (120 vs. stepsize 300)
