@@ -33,14 +33,15 @@ require 'INSTALLDIR/etc/sysstat.conf.rb'
 $: << "#{@config['installdir']}/lib"
 
 # Load main functions
+require "RRDtool"
 require "Smain.rb"
 
 @modules = Hash.new
 @childs = Hash.new
 
-initialize
-get_data
-create_graphs
+@sysstat = Smain.new
+@sysstat.get_data
+@sysstat.create_graphs
 
 
 trap("SIGHUP") do

@@ -35,16 +35,15 @@ class Smemory
 		@@config = config
 		@@data['fram'] = 0
 		@@data['fswap'] = 0
+		@@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd")
 	end
 
 	def mkdb
-		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd \
-			--step #{@@config['step']} \
-			DS:ram:GAUGE:#{@@config['step']+60}:0:U \
-			DS:swap:GAUGE:#{@@config['step']+60}:0:U \
-			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
-			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760]
+	  @@rrd.create(@@config['step']), Time.now.to_i-1,
+			["DS:ram:GAUGE:#{@@config['step']+60}:0:U",
+			 "DS:swap:GAUGE:#{@@config['step']+60}:0:U", 
+			 "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			 "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"]
 	end
 
 	def get
@@ -72,7 +71,7 @@ class Smemory
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd N:#{@@data['fram']}:#{@@data['fswap']}]
+	  @@rrd.update("ram:swap", ["N:#{@@data['fram']}:#{@@data['fwap']}"])
 	end
 
 	def graph(timeframe)

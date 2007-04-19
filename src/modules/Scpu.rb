@@ -36,19 +36,18 @@ class Scpu
 		@@data['idle'] = 0
 		@@data['system'] = 0
 		@@data['user'] = 0
+		@@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['cpu_prefix']}.rrd")
 	end
 
 	def mkdb
-		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/#{@@config['cpu_prefix']}.rrd \
-			--step #{@@config['step']} \
-			DS:usr:GAUGE:#{@@config['step']+60}:0:U \
-			DS:sys:GAUGE:#{@@config['step']+60}:0:U \
-			DS:idl:GAUGE:#{@@config['step']+60}:0:U \
-			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
-			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
-			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
-			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	  @@rrd.create(@@config['step']), Time.now.to_i-1,
+	  	["DS:usr:GAUGE:#{@@config['step']+60}:0:U",
+			 "DS:sys:GAUGE:#{@@config['step']+60}:0:U",
+			 "DS:idl:GAUGE:#{@@config['step']+60}:0:U",
+			 "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			 "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+			 "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+			 "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
 	end
 
 	def get
@@ -76,7 +75,7 @@ class Scpu
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['cpu_prefix']}.rrd N:#{@@data['user']}:#{@@data['system']}:#{@@data['idle']}]
+	  @@rrd.update("usr:sys:idl", ["N:#{@@data['tcp']}:#{@@data['udp']}"])
 	end
 
 	def graph(timeframe)

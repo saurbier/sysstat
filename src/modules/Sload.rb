@@ -36,19 +36,18 @@ class Sload
 		@@data['1min'] = 0
 		@@data['5min'] = 0
 		@@data['15min'] = 0
+		@@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd")
 	end
 
 	def mkdb
-		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd \
-			--step #{@@config['step']} \
-			DS:load1:GAUGE:#{@@config['step']+60}:0:U \
-			DS:load5:GAUGE:#{@@config['step']+60}:0:U \
-			DS:load15:GAUGE:#{@@config['step']+60}:0:U \
-			RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
-			RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
-			RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
-			RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+	  @@rrd.create(@@config['step']), Time.now.to_i-1,
+			["DSS:load1:GAUGE:#{@@config['step']+60}:0:U",
+			 "DS:load5:GAUGE:#{@@config['step']+60}:0:U",
+			 "DS:load15:GAUGE:#{@@config['step']+60}:0:U",
+			 "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			 "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+			 "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+			 "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
 	end
 
 	def get
@@ -74,7 +73,8 @@ class Sload
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['load_prefix']}.rrd N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}]
+	  @@rrd.update("load1:load5:load15",
+	    ["N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}"])
 	end
 
 	def graph(timeframe)
