@@ -39,13 +39,15 @@ class Sconnections
 	end
 
 	def mkdb
-	  @@rrd.create(@@config['step']), Time.now.to_i-1,
-	    ["DS:tcp:GAUGE:#{@@config['step']+60}:0:U",
-       "DS:udp:GAUGE:#{@@config['step']+60}:0:U",
-       "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-       "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-       "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-       "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+	  if(!FileTest.exist?(@@rrd.rrdname))
+	    @@rrd.create(@@config['step']), Time.now.to_i-1,
+	      ["DS:tcp:GAUGE:#{@@config['step']+60}:0:U",
+         "DS:udp:GAUGE:#{@@config['step']+60}:0:U",
+         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+    end
 	end
 
 	def get

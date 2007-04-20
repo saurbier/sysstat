@@ -38,12 +38,14 @@ class Sprocesses
 	end
 
 	def mkdb
-	  @@rrd.create(@@config['step']), Time.now.to_i-1,
-			["DS:processes:GAUGE:#{@@config['step']+60}:0:U",
-			 "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-			 "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-			 "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-			 "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"]
+	  if(!FileTest.exist?(@@rrd.rrdname))
+	    @@rrd.create(@@config['step']), Time.now.to_i-1,
+			  ["DS:processes:GAUGE:#{@@config['step']+60}:0:U",
+			   "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			   "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+			   "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+			   "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"]
+		end
 	end
 
 	def get
@@ -76,19 +78,24 @@ class Sprocesses
 			@suffix = "year"
 		end
 
-		%x[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix}.png -i \
-			--start #{@start} -a PNG -t "Number of processes" \
-			--vertical-label "processes" -w 600 -h 150 \
-			--color SHADEA#ffffff --color SHADEB#ffffff \
-			--color BACK#ffffff \
-			DEF:processes=#{@@config['dbdir']}/#{@@config['processes_prefix']}.rrd:processes:AVERAGE \
-			LINE1:processes#ff0000:"Process count" \
-			VDEF:auswertung1=processes,AVERAGE \
-			GPRINT:auswertung1:"Average process count\\: %lg" \
-			DEF:maxaus=#{@@config['dbdir']}/#{@@config['processes_prefix']}.rrd:processes:MAX \
-			VDEF:maxaus1=maxaus,MAXIMUM \
-			GPRINT:maxaus1:"Maximum process count\\: %lg"]
+    @@rrd.graph(
+      ["#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix}.png",
+			 "--title", "Number of processes",
+			 "--start", "#{@start}", 
+			 "--interlace",
+			 "--imgformat", "PNG",
+			 "--width=600", "--height=150",
+			 "--vertical-label", "processes"
+			 "--color", "SHADEA#ffffff",
+			 "--color", "SHADEB#ffffff",
+			 "--color", "BACK#ffffff",
+			 "DEF:processes=#{@@rrd.name}:processes:AVERAGE",
+			 "LINE1:processes#ff0000:\"Process count\"",
+			 "VDEF:auswertung1=processes,AVERAGE",
+			 "GPRINT:auswertung1:\"Average process count\\: %lg\"",
+			 "DEF:maxaus=#{@@rrd.rrdname}:processes:MAX",
+			 "VDEF:maxaus1=maxaus,MAXIMUM",
+			 "GPRINT:maxaus1:\"Maximum process count\\: %lg\""])
 	end
 end
 

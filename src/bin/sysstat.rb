@@ -25,32 +25,56 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 
+# Ingore HANGUP signal
+Signal.trap('HUP', 'IGNORE')
 
-# Load configuration
-require 'INSTALLDIR/etc/sysstat.conf.rb'
+@config = "INSTALLDIR/etc/sysstat.conf"
 
 # Add lib directories to include path
-$: << "#{@config['installdir']}/lib"
+$: << "INSTALLDIR/lib"
 
 # Load main functions
+require "getoptlong.rb"
 require "RRDtool"
 require "Smain.rb"
 
-@modules = Hash.new
-@childs = Hash.new
+# Get arguments
+opts = GetoptLong.new
+opts.ordering(GetoptLong::PERMUTE)
+opts.set_options(
+  ['--config-file',   '-c', GetoptLong::REQUIRE_ARGUMENT],
+  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
+  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
+opts.each_option do |name arg|
+  case(name)
+    when("--config-file")
+      @config = arg
 
-@sysstat = Smain.new
+    when("--help")
+      # Display help message
+
+    when("--version")
+      # Display Version
+  end
+end
+opts.terminate
+
+# Initialize main routines
+@sysstat = Smain.new(@config)
 @sysstat.get_data
 @sysstat.create_graphs
 
+# Restart on SIGUSR1
+trap("SIGUSR1") do
+  @sysstat.kill_childs
 
-trap("SIGHUP") do
-	Process.kill("SIGHUP", @childs['graph'])
-	Process.kill("SIGHUP", @childs['data'])
 	require "#{@config['installdir']}/etc/sysstat.conf.rb"
-	get_data
-	create_graphs
+
+  @sysstat = Smain.new(@config)
+  @sysstat.get_data
+  @sysstat.create_graphs
 end
+trap("SIGKILL") do {@sysstat.kill_childs}
+trap("SIGTERM") do {@sysstat.kill_childs}
 
 Process.wait
-

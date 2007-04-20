@@ -1,7 +1,12 @@
+Prerelease - 20070420
+	- Moved to RubyRRDtool
+	- mkdb now checks if database exits
+	- Configuration is no longer read by "require"
+	- Added usage of getoptslong.rb
+
 Prerelease - 20070414
 	- Createt Smain.rb
 	- Moved modules from src/classes to src/modules
-	-
 
 Prerelease - 20070402
 First running version
@@ -10,4 +15,3 @@ First running version
 	- Fixed filenames of graphics
 	- Fixed missing swap routines (FreeBSD)
 	- Updated graphic functions (from Sysstat 1.3)
-

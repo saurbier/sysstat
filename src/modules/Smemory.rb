@@ -39,11 +39,13 @@ class Smemory
 	end
 
 	def mkdb
-	  @@rrd.create(@@config['step']), Time.now.to_i-1,
-			["DS:ram:GAUGE:#{@@config['step']+60}:0:U",
-			 "DS:swap:GAUGE:#{@@config['step']+60}:0:U", 
-			 "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-			 "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"]
+	  if(!FileTest.exist?(@@rrd.rrdname))
+	    @@rrd.create(@@config['step']), Time.now.to_i-1,
+			  ["DS:ram:GAUGE:#{@@config['step']+60}:0:U",
+			   "DS:swap:GAUGE:#{@@config['step']+60}:0:U", 
+			   "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			   "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"]
+		end
 	end
 
 	def get
@@ -91,27 +93,31 @@ class Smemory
 			@suffix = "year"
 		end
 
-		%x[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['memory_prefix']}-#{@suffix}.png -i \
-			--start #{@start} -a PNG -t "RAM and Swap" \
-			--vertical-label "Bytes" -w 600 -h 150 \
-			--color SHADEA#ffffff --color SHADEB#ffffff \
-			--color BACK#ffffff \
-			DEF:ram=#{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd:ram:AVERAGE \
-			DEF:swap=#{@@config['dbdir']}/#{@@config['memory_prefix']}.rrd:swap:AVERAGE \
-			CDEF:bram=#{@@config['mem_ramtotal']},ram,- \
-			CDEF:bswap=#{@@config['mem_swaptotal']},swap,- \
-			AREA:bram#99ffff:"used RAM\\: " \
-			VDEF:bramlast=bram,LAST VDEF:ramlast=ram,LAST \
-			VDEF:bswaplast=bswap,LAST VDEF:swaplast=swap,LAST \
-			GPRINT:bramlast:"%4.3lf %sB" \
-			LINE1:ram#ff0000:"free RAM\\: " \
-			GPRINT:ramlast:"%4.3lf %sB\\n" \
-			LINE1:bswap#000000:"used SWAP\\: " \
-			GPRINT:bswaplast:"%4.3lf %sB " \
-			LINE1:swap#006600:"free SWAP\\: " \
-			GPRINT:swaplast:"%4.3lf %sB"]
-
+    @@rrd.graph(
+      ["#{@@config['graphdir']}/#{@@config['memory_prefix']}-#{@suffix}.png",
+			 "--title", "RAM and Swap usage",
+			 "--start", "#{@start}", 
+			 "--interlace",
+			 "--imgformat", "PNG",
+			 "--width=600", "--height=150",
+			 "--vertical-label", "Bytes"
+			 "--color", "SHADEA#ffffff",
+			 "--color", "SHADEB#ffffff",
+			 "--color", "BACK#ffffff",
+			 "DEF:ram=#{@@rrd.rrdname}:ram:AVERAGE",
+			 "DEF:swap=#{@@rrd.rrdname}:swap:AVERAGE",
+			 "CDEF:bram=#{@@config['mem_ramtotal']},ram,-",
+			 "CDEF:bswap=#{@@config['mem_swaptotal']},swap,-",
+			 "AREA:bram#99ffff:\"used RAM\\: \"",
+			 "VDEF:bramlast=bram,LAST", "VDEF:ramlast=ram,LAST",
+			 "VDEF:bswaplast=bswap,LAST", "VDEF:swaplast=swap,LAST",
+			 "GPRINT:bramlast:\"%4.3lf %sB\"",
+			 "LINE1:ram#ff0000:\"free RAM\\: \"",
+			 "GPRINT:ramlast:\"%4.3lf %sB\\n\"",
+			 "LINE1:bswap#000000:\"used SWAP\\: \"",
+			 "GPRINT:bswaplast:\"%4.3lf %sB \"",
+			 "LINE1:swap#006600:\"free SWAP\\: \"",
+			 "GPRINT:swaplast:\"%4.3lf %sB\""])
 	end
 end
 

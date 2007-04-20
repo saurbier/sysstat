@@ -30,10 +30,12 @@
 class Snetwork
 	@@config = 0
 	@@data = Hash.new 
+	@@rrd = Hash.new
 
 	def initialize(config)
 		@@config = config
 		@@config["net_interfaces"].split().each do |interface|
+		  @@rrd[interface] = RRDtool.new("#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd")
 			@@data[interface] = Hash.new
 			@@data[interface]['in'] = 0
 			@@data[interface]['out'] = 0
@@ -42,15 +44,15 @@ class Snetwork
 
 	def mkdb
 		@@config["net_interfaces"].split().each do |interface|
-			%x[#{@@config['rrdtool']} create \
-				#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd \
-				--step #{@@config['step']} \
-				DS:in:COUNTER:#{@@config['step']+60}:0:U \
-				DS:out:COUNTER:#{@@config['step']+60}:0:U \
-				RRA:AVERAGE:0.5:1:2160 RRA:AVERAGE:0.5:5:2016 \
-				RRA:AVERAGE:0.5:15:2880 RRA:AVERAGE:0.5:60:8760 \
-				RRA:MAX:0.5:1:2160 RRA:MAX:0.5:5:2016 \
-				RRA:MAX:0.5:15:2880 RRA:MAX:0.5:60:8760]
+		  if(!FileTest.exist?(@@rrd[interface].rrdname))
+	      @@rrd[interface].create(@@config['step']), Time.now.to_i-1,
+			    ["DS:in:COUNTER:#{@@config['step']+60}:0:U",
+			     "DS:out:COUNTER:#{@@config['step']+60}:0:U",
+			     "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+			     "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+			     "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+			     "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+			end
 		end
 	end
 
@@ -81,7 +83,8 @@ class Snetwork
 
 	def write
 		@@config["net_interfaces"].split().each do |interface|
-			%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd N:#{@@data[interface]['in']}:#{@@data[interface]['out']}]
+		  @@rrd[interface].update("in:out",
+		    ["N:#{@@data[interface]['in']}:#{@@data[interface]['out']}"])
 		end
 	end
 
@@ -101,27 +104,31 @@ class Snetwork
 		end
 
 		@@config["net_interfaces"].split().each do |interface|
-		    %x[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png \
-			-i --start #{@start} -a PNG \
-			-t "Network Interface #{interface}" \
-			--vertical-label "Bits/s" -w 600 -h 150 \
-			--color SHADEA#ffffff --color SHADEB#ffffff \
-			--color BACK#ffffff \
-			COMMENT:"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n" \
-			DEF:r=#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd:in:AVERAGE \
-			CDEF:rx=r,8,* AREA:rx#00dd00:"Inbound " \
-			VDEF:rxlast=rx,LAST GPRINT:rxlast:" %12.3lf %s" \
-			VDEF:rxave=rx,AVERAGE GPRINT:rxave:"%12.3lf %s" \
-			VDEF:rxmax=rx,MAXIMUM GPRINT:rxmax:"%12.3lf %s" \
-			VDEF:rxtotal=r,TOTAL GPRINT:rxtotal:"%12.1lf %sb\\n" \
-			DEF:t=#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd:out:AVERAGE \
-			CDEF:txa=t,-8,* CDEF:tx=t,8,* \
-			AREA:txa#0000ff:"Outbound " \
-			VDEF:txlast=tx,LAST GPRINT:txlast:"%12.3lf %s" \
-			VDEF:txave=tx,AVERAGE GPRINT:txave:"%12.3lf %s" \
-			VDEF:txmax=tx,MAXIMUM GPRINT:txmax:"%12.3lf %s" \
-			VDEF:txtotal=t,TOTAL GPRINT:txtotal:"%12.1lf %sb"]
+      @@rrd[interface].graph(
+        ["#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png",
+         "--title", "Network Interface #{interface}",
+         "--start", "#{@start}", 
+         "--interlace",
+			   "--imgformat", "PNG",
+			   "--width=600", "--height=150",
+			   "--vertical-label", "Bits/s"
+			   "--color", "SHADEA#ffffff",
+			   "--color", "SHADEB#ffffff",
+			   "--color", "BACK#ffffff",
+			   "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n\"",
+			   "DEF:r=#{@@rrd.rrdname}:in:AVERAGE",
+			   "CDEF:rx=r,8,*", "AREA:rx#00dd00:\"Inbound \"",
+			   "VDEF:rxlast=rx,LAST", "GPRINT:rxlast:\" %12.3lf %s\"",
+			   "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:\"%12.3lf %s\"",
+			   "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:\"%12.3lf %s\"",
+			   "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:\"%12.1lf %sb\\n\"",
+			   "DEF:t=#{@@rrd.rrdname}:out:AVERAGE",
+			   "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
+			   "AREA:txa#0000ff:\"Outbound \"",
+			   "VDEF:txlast=tx,LAST", "GPRINT:txlast:\"%12.3lf %s\"",
+			   "VDEF:txave=tx,AVERAGE", "GPRINT:txave:\"%12.3lf %s\"",
+			   "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:\"%12.3lf %s\"",
+			   "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:\"%12.1lf %sb\""])
 		end
 	end
 end
