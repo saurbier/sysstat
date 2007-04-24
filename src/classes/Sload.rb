@@ -41,8 +41,8 @@ class Sload
 
 	def mkdb
 	  if(!FileTest.exist?(@@rrd.rrdname))
-	    @@rrd.create(@@config['step']), Time.now.to_i-1,
-			  ["DSS:load1:GAUGE:#{@@config['step']+60}:0:U",
+	    @@rrd.create(@@config['step'], Time.now.to_i-1,
+			  ["DS:load1:GAUGE:#{@@config['step']+60}:0:U",
 			   "DS:load5:GAUGE:#{@@config['step']+60}:0:U",
 			   "DS:load15:GAUGE:#{@@config['step']+60}:0:U",
 			   "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
@@ -96,21 +96,21 @@ class Sload
 			@suffix = "year"
 		end
 
-    @@rrd.graph(
+    RRDtool.graph(
       ["#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix}.png",
 			 "--title", "Load Average",
 			 "--start", "#{@start}", 
 			 "--interlace",
 			 "--imgformat", "PNG",
 			 "--width=600", "--height=150",
-			 "--vertical-label", "Load"
+			 "--vertical-label", "Load",
 			 "--color", "SHADEA#ffffff",
 			 "--color", "SHADEB#ffffff",
 			 "--color", "BACK#ffffff",
 			 "COMMENT:\"\t\t\t   Current\t     Average\t  Maximum\\n\"",
-			 "DEF:load1=#{@@rrd.name}:load1:AVERAGE",
-			 "DEF:load5=#{@@rrd.name}:load5:AVERAGE",
-			 "DEF:load15=#{@@rrd.name}:load15:AVERAGE",
+			 "DEF:load1=#{@@rrd.rrdname}:load1:AVERAGE",
+			 "DEF:load5=#{@@rrd.rrdname}:load5:AVERAGE",
+			 "DEF:load15=#{@@rrd.rrdname}:load15:AVERAGE",
 			 "AREA:load1#ff0000:\"1 minute  \"", "LINE1:load1#ff0000:\"\"",
 			 "VDEF:load1l=load1,LAST", "GPRINT:load1l:\"%12.2lf\"",
 			 "VDEF:load1avg=load1,AVERAGE", "GPRINT:load1avg:\"%12.2lf\"",

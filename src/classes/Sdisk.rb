@@ -45,7 +45,7 @@ class Sdisk
 	def mkdb
 		@@config['hdds'].split().each do |hdd|
 		  if(!FileTest.exist?(@@rrd[hdd].rrdname))
-	      @@rrd[hdd].create(@@config['step']), Time.now.to_i-1,
+	      @@rrd[hdd].create(@@config['step'], Time.now.to_i-1,
 			    ["DS:size:COUNTER:#{@@config['step']+60}:0:U",
 			     "DS:used:COUNTER:#{@@config['step']+60}:0:U",
 			     "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
@@ -95,14 +95,14 @@ class Sdisk
 		end
 
 		@@config['hdds'].split().each do |hdd|
-      @@rrd[hdd].graph(
+      RRDtool.graph(
         ["#{@@config['graphdir']}/#{@@config['hdds_prefix']}-#{hdd}-#{@suffix}.png",
          "--title", "Usage statistics for /dev/#{hdd}",
          "--start", "#{@start}", 
          "--interlace",
 			   "--imgformat", "PNG",
 			   "--width=600", "--height=150",
-			   "--vertical-label", "Bytes"
+			   "--vertical-label", "Bytes",
 			   "--color", "SHADEA#ffffff",
 			   "--color", "SHADEB#ffffff",
 			   "--color", "BACK#ffffff",

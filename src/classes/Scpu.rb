@@ -41,7 +41,7 @@ class Scpu
 
 	def mkdb
 	  if(!FileTest.exist?(@@rrd.rrdname))
-	    @@rrd.create(@@config['step']), Time.now.to_i-1,
+	    @@rrd.create(@@config['step'], Time.now.to_i-1,
 	  	  ["DS:usr:GAUGE:#{@@config['step']+60}:0:U",
 			   "DS:sys:GAUGE:#{@@config['step']+60}:0:U",
 			   "DS:idl:GAUGE:#{@@config['step']+60}:0:U",
@@ -97,14 +97,14 @@ class Scpu
 			@start = -31536000
 			@suffix = "year"
 		end
-    @@rrd.graph(
+    RRDtool.graph(
       ["#{@@config['graphdir']}/#{@@config['cpu_prefix']}-#{@suffix}.png",
 			 "--title", "CPU usage",
 			 "--start", "#{@start}", 
 			 "--interlace",
 			 "--imgformat", "PNG",
 			 "--width=600", "--height=150",
-			 "--vertical-label", "Percent"
+			 "--vertical-label", "Percent",
 			 "--color", "SHADEA#ffffff",
 			 "--color", "SHADEB#ffffff",
 			 "--color", "BACK#ffffff",

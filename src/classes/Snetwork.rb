@@ -45,7 +45,7 @@ class Snetwork
 	def mkdb
 		@@config['net_interfaces'].split().each do |interface|
 		  if(!FileTest.exist?(@@rrd[interface].rrdname))
-	      @@rrd[interface].create(@@config['step']), Time.now.to_i-1,
+	      @@rrd[interface].create(@@config['step'], Time.now.to_i-1,
 			    ["DS:in:COUNTER:#{@@config['step']+60}:0:U",
 			     "DS:out:COUNTER:#{@@config['step']+60}:0:U",
 			     "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
@@ -103,14 +103,14 @@ class Snetwork
 		end
 
 		@@config['net_interfaces'].split().each do |interface|
-      @@rrd[interface].graph(
+      RRDtool.graph(
         ["#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png",
          "--title", "Network Interface #{interface}",
          "--start", "#{@start}", 
          "--interlace",
 			   "--imgformat", "PNG",
 			   "--width=600", "--height=150",
-			   "--vertical-label", "Bits/s"
+			   "--vertical-label", "Bits/s",
 			   "--color", "SHADEA#ffffff",
 			   "--color", "SHADEB#ffffff",
 			   "--color", "BACK#ffffff",

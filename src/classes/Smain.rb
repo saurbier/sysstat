@@ -60,7 +60,7 @@ class Smain
   # Childs for getting data and writing to database
   def get_data
 	  @@childs["data"] = Process.fork do
-	    # Ignore HANUP signal
+      # Ignore HANUP signal
       trap('HUP', 'IGNORE')
       
       # Exit on SIGTERM or SIGKILL

@@ -40,7 +40,7 @@ class Sconnections
 
 	def mkdb
 	  if(!FileTest.exist?(@@rrd.rrdname))
-	    @@rrd.create(@@config['step']), Time.now.to_i-1,
+	    @@rrd.create(@@config['step'], Time.now.to_i-1,
 	      ["DS:tcp:GAUGE:#{@@config['step']+60}:0:U",
          "DS:udp:GAUGE:#{@@config['step']+60}:0:U",
          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
@@ -87,14 +87,14 @@ class Sconnections
 			@suffix = "year"
 		end
 
-    @@rrd.graph(
+    RRDtool.graph(
       ["#{@@config['graphdir']}/#{@@config['connections_prefix']}-#{@suffix}.png",
 			 "--title", "Network connections",
 			 "--start", "#{@start}", 
 			 "--interlace",
 			 "--imgformat", "PNG",
 			 "--width=600", "--height=150",
-			 "--vertical-label", "Connections"
+			 "--vertical-label", "Connections",
 			 "--color", "SHADEA#ffffff",
 			 "--color", "SHADEB#ffffff",
 			 "--color", "BACK#ffffff",
@@ -108,7 +108,7 @@ class Sconnections
 			 "LINE1:udp#0000ff:\"UDP \"",
 			 "VDEF:udplast=udp,LAST", "GPRINT:udplast:\" %12.3lf \"",
 			 "VDEF:udpavg=udp,AVERAGE", "GPRINT:udpavg:\" %12.3lf \"",
-			 "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax:\" %12.3lf\""]
+			 "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax:\" %12.3lf\""])
 	end
 end
 

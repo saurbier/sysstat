@@ -28,41 +28,136 @@
 # Ingore HANGUP signal
 Signal.trap('HUP', 'IGNORE')
 
-@config = "INSTALLDIR/etc/sysstat.conf"
-$SVERSION = "2.3"
-
-# Add lib directories to include path
-$: << "INSTALLDIR/lib"
+@conffile = "INSTALLDIR/etc/sysstat.conf"
+@childs = Hash.new
+@modules = Hash.new
+@config = Hash.new
+$SVERSION = "2.7"
 
 # Load main functions
-require "getoptlong.rb"
+#require "getoptlong.rb"
+require "rubygems"
 require "RRDtool"
-require "Smain.rb"
 
 # Get arguments
-opts = GetoptLong.new
-opts.ordering(GetoptLong::PERMUTE)
-opts.set_options(
-  ['--config-file',   '-c', GetoptLong::REQUIRE_ARGUMENT],
-  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
-  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
-opts.each_option do |name arg|
-  case(name)
-    when("--config-file")
-      @config = arg
+#opts = GetoptLong.new
+#opts.ordering(GetoptLong::PERMUTE)
+#opts.set_options(
+#  ['--config-file',   '-c', GetoptLong::REQUIRE_ARGUMENT],
+#  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
+#  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
+#opts.each do |name arg|
+#  case(name)
+#    when("--config-file")
+#      @conffile = arg
+#
+#    when("--help")
+#      # Display help message
+#      puts "help"
+#
+#    when("--version")
+#      # Display Version
+#      puts "Sysstat #{$SVERSION}"
+#  end
+#end
+#opts.terminate
 
-    when("--help")
-      # Display help message
-      puts "help"
 
-    when("--version")
-      # Display Version
-      puts "Sysstat #{$SVERSION}"
+# Read configuration file and set values in @@config hash
+f = File.open(@conffile)
+f.each do |line|
+  if(line =~ /^\#/ or line =~ /^\n/)
+  else
+    linea = line.split(/=/)
+    if(linea[0] == "step" or linea[0] == "graph_interval")
+      @config[linea[0]] = linea[1].strip!.squeeze(" ").to_i
+    else
+      @config[linea[0]] = linea[1].strip!.squeeze(" ")
+    end
   end
 end
-opts.terminate
+f.close
 
+# Add lib directories to include path
+$: << "#{@config['installdir']}/lib"
 
+# Initialize modules
+@config['modules'].split().each do |modul|
+  # Load modules and initialize them
+  require "#{modul}.rb"
+  @modules[modul] = Object.const_get(modul).new(@config)
+
+  # Checks if databases exist and create if needed
+  @modules[modul].mkdb
+end
+
+# Childs for getting data and writing to database
+@childs["data"] = Process.fork do
+  # Ignore HANUP signal
+  trap('HUP', 'IGNORE')
+
+  # Exit on SIGTERM or SIGKILL
+  trap("SIGTERM") { Process.exit!(0) }
+  trap("SIGKILL") { Process.exit!(0) }
+
+  # Initialize time object
+  time = Time.now
+
+  # Get and write data in endless loop
+  loop do
+    # Check if enough time since last update has gone
+    if(time <= Time.now)
+      # Increment time object with @@config['step'] seconds
+      time = Time.now + @config['step']
+
+      # Get and write data for every module
+      @config['modules'].split().each do |modul|
+        @modules[modul].get
+        @modules[modul].write
+      end
+    end
+
+    # Sleep until next run
+    sleep 30
+  end
+end
+
+# Childs for creating graphics
+@childs["graph"] = Process.fork do
+  # Ignore HANUP signal
+  trap('HUP', 'IGNORE')
+
+  # Exit on SIGTERM or SIGKILL
+  trap("SIGTERM") { Process.exit!(0) }
+  trap("SIGKILL") { Process.exit!(0) }
+
+  # Initialize time object	
+  time = Time.now
+
+  # Create graphs in endless loop
+  loop do
+    # Check if enough time since last update has gone
+    if(time <= Time.now)
+      # Increment time object with @@config['graph_interval'] seconds
+      time = Time.now + @config['graph_interval']
+
+      # Create graphs for every module
+      @config['modules'].split().each do |modul|
+        @modules[modul].graph("day")
+        @modules[modul].graph("week")
+        @modules[modul].graph("month")
+        @modules[modul].graph("year")
+      end
+    end
+
+    # Sleep until next run
+    sleep 60
+  end
+end
+
+def kill_childs
+  # Send all childs a KILL signal
+end
 # Initialize main routines
 @sysstat = Smain.new(@config)
 
@@ -84,8 +179,16 @@ trap("SIGUSR1") do
 end
 
 # Kill child processes on SIGKILL or SIGTERM
-trap("SIGKILL") do {@sysstat.kill_childs}
-trap("SIGTERM") do {@sysstat.kill_childs}
+trap("SIGKILL") do
+  @childs.each do |name, pid|
+    Process.kill("SIGKILL", pid)
+  end
+end
+trap("SIGTERM") do
+  @childs.each do |name, pid|
+    Process.kill("SIGTERM", pid)
+  end
+end
 
 # Wait for child processes
 Process.wait
