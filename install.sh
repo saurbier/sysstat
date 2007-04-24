@@ -118,12 +118,16 @@ for i in $ls src/html/*.html); do
 	sed "s:HOSTNAME:$(hostname -s):g" $i > tmp/$(basename $i)
 done
 
+fo i in $HDDS; do
+	sed "s:HDD:$i:g" tmp/network.html > tmp/hdds-$i.html
+	INDEXHDD=$INDEXHDD"<p><a href=\"./hdds-$i.html\"><img border=\"0\" src=\"hdds-$i-day.png\" alt=\"HDD statistics\"></a></p>\n"
 for i in $INTERFACES; do
 	sed "s:INTERFACE:$i:g" tmp/network.html > tmp/net-$i.html
-	INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"<img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>\n"
+	INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"><img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>\n"
 done
 
-sed "s:NETWORK:$INDEXNET:" tmp/index.html > tmp/index.html.tmp
+sed "s:NETWORK:$INDEXNET:" tmp/index.html | \
+ 	sed "s:HDD:$INDEXHDD:" > tmp/index.html.tmp
 mv tmp/index.html.tmp tmp/index.html
 
 rm tmp/network.html
