@@ -108,11 +108,6 @@ for i in $(ls src/classes/*.rb); do
 	cp $i tmp/$(basename $i)
 done
 
-# Create modules
-for i in $(ls src/modules/*.rb); do
-	cp $i tmp/$(basename $i)
-done
-
 # Create html files
 for i in $(ls src/html/*.html); do
 	sed "s:HOSTNAME:$(hostname -s):g" $i > tmp/$(basename $i)
