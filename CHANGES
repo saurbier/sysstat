@@ -1,3 +1,11 @@
+Version 2.6 - 2004-04-24
+	- Better comments in the code
+	- Fixed typos in the install.sh
+
+Version 2.5 - 2007-04-24
+	- Added missing html-files for hdd statistic
+	- Fixed index.html for hdd statistics
+	
 Version 2.4 - 2007-04-24
 	- Added hdd statistics
 	- Fixed some non-critical typos in network statistics class

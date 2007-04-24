@@ -88,7 +88,7 @@ INTERFACES= $(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | 
 mkdir -p tmp
 
 # Create configuration file
-cat src/conf/sysstat.conf.rb | \
+cat src/conf/sysstat.conf | \
 	sed "s:OS:$OS:" | \
 	sed "s:INSTALLDIR:$PREFIX:" | \
 	sed "s:GRAPHDIR:$GRAPHDIR:" | \
@@ -98,29 +98,31 @@ cat src/conf/sysstat.conf.rb | \
 	sed "s:INTERFACES:$INTERFACES:" | \
 	sed "s:HDDS:$HDDS:" | \
 	sed "s:RAM:$RAM:" | \
-	sed "s:SWAP:$SWAP:" > tmp/sysstat.conf.rb
+	sed "s:SWAP:$SWAP:" > tmp/sysstat.conf
 
 # Create daemon
 sed "s:CONF:$CONF:" src/bin/sysstat.rb > tmp/sysstat.rb
 
 # Create classes
 for i in $(ls src/classes/*.rb); do
-	cat $i > tmp/$(basename $i)
+	cp $i tmp/$(basename $i)
 done
 
 # Create modules
 for i in $(ls src/modules/*.rb); do
-	cat $i > tmp/$(basename $i)
+	cp $i tmp/$(basename $i)
 done
 
 # Create html files
-for i in $ls src/html/*.html); do
+for i in $(ls src/html/*.html); do
 	sed "s:HOSTNAME:$(hostname -s):g" $i > tmp/$(basename $i)
 done
 
-fo i in $HDDS; do
-	sed "s:HDD:$i:g" tmp/network.html > tmp/hdds-$i.html
+for i in $HDDS; do
+	sed "s:HDD:$i:g" tmp/hdds.html > tmp/hdds-$i.html
 	INDEXHDD=$INDEXHDD"<p><a href=\"./hdds-$i.html\"><img border=\"0\" src=\"hdds-$i-day.png\" alt=\"HDD statistics\"></a></p>\n"
+done
+
 for i in $INTERFACES; do
 	sed "s:INTERFACE:$i:g" tmp/network.html > tmp/net-$i.html
 	INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"><img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>\n"

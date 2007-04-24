@@ -32,6 +32,7 @@ class Smain
   @@config = Hash.new
   
   def initialize(config)
+    # Read configuration file and set values in @@config hash
     f = File.open(config)
     f.each do |line|
       if(line =~~/^#/)
@@ -58,21 +59,32 @@ class Smain
 
   # Childs for getting data and writing to database
   def get_data
-	  @@childs["data"] = Process.fork do 
+	  @@childs["data"] = Process.fork do
+	    # Ignore HANUP signal
       trap('HUP', 'IGNORE')
+      
+      # Exit on SIGTERM or SIGKILL
 		  trap("SIGTERM") { Process.exit!(0) }
 		  trap("SIGKILL") { Process.exit!(0) }
 
+      # Initialize time object
 		  time = Time.now
 
+      # Get and write data in endless loop
 		  loop do
+		    # Check if enough time since last update has gone
 			  if(time <= Time.now)
+			    # Increment time object with @@config['step'] seconds
 				  time = Time.now + @@config['step']
+				  
+				  # Get and write data for every module
 				  @@config['modules'].split().each do |modul|
 					  @@modules[modul].get
 					  @@modules[modul].write
 				  end
 			  end
+			  
+			  # Sleep until next run
 			  sleep 30
 		  end
 	  end
@@ -80,16 +92,25 @@ class Smain
 
   # Childs for creating graphics 
   def create_graphs
-	  @@childs["graph"] = Process.fork do 
+	  @@childs["graph"] = Process.fork do
+	    # Ignore HANUP signal
       trap('HUP', 'IGNORE')
+      
+      # Exit on SIGTERM or SIGKILL
 		  trap("SIGTERM") { Process.exit!(0) }
 		  trap("SIGKILL") { Process.exit!(0) }
-	
+
+      # Initialize time object	
 		  time = Time.now
 	
+      # Create graphs in endless loop
 		  loop do
+		    # Check if enough time since last update has gone
 			  if(time <= Time.now)
+			    # Increment time object with @@config['graph_interval'] seconds
 				  time = Time.now + @@config['graph_interval']
+				  
+				  # Create graphs for every module
 				  @@config['modules'].split().each do |modul|
 					  @@modules[modul].graph("day")
 					  @@modules[modul].graph("week")
@@ -97,12 +118,15 @@ class Smain
 					  @@modules[modul].graph("year")
 				  end
 			  end
-			  sleep 30
+			  
+			  # Sleep until next run
+			  sleep 60
 		  end
 	  end
   end
 
   def kill_childs
+    # Send all childs a KILL signal
     @@childs.each do |name pid|
   	  Process.kill("SIGKILL", pid)
     end

@@ -65,19 +65,27 @@ opts.terminate
 
 # Initialize main routines
 @sysstat = Smain.new(@config)
+
+# Start child processes
 @sysstat.get_data
 @sysstat.create_graphs
 
 # Restart on SIGUSR1
 trap("SIGUSR1") do
+  # Kill child processes
   @sysstat.kill_childs
-
-
+  
+  # Reinitialize main routines (and configuration)
   @sysstat = Smain.new(@config)
+  
+  # Restart child processes
   @sysstat.get_data
   @sysstat.create_graphs
 end
+
+# Kill child processes on SIGKILL or SIGTERM
 trap("SIGKILL") do {@sysstat.kill_childs}
 trap("SIGTERM") do {@sysstat.kill_childs}
 
+# Wait for child processes
 Process.wait
