@@ -23,8 +23,7 @@ Version 2.2 - 2007-04-20
 	- Added usage of getoptslong.rb
 
 Version 2.1 - 2007-04-14
-	- Createt Smain.rb
-	- Moved modules from src/classes to src/modules
+	- Created Smain.rb
 
 Version 2.0 - 2007-04-02
 	- Fixed graph creation
