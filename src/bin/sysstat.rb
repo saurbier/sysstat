@@ -1,4 +1,4 @@
-#!RUBYBIN
+#!/usr/bin/env ruby
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -29,6 +29,7 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "INSTALLDIR/etc/sysstat.conf"
+$SVERSION = "2.3"
 
 # Add lib directories to include path
 $: << "INSTALLDIR/lib"
@@ -52,12 +53,15 @@ opts.each_option do |name arg|
 
     when("--help")
       # Display help message
+      puts "help"
 
     when("--version")
       # Display Version
+      puts "Sysstat #{$SVERSION}"
   end
 end
 opts.terminate
+
 
 # Initialize main routines
 @sysstat = Smain.new(@config)
@@ -68,7 +72,6 @@ opts.terminate
 trap("SIGUSR1") do
   @sysstat.kill_childs
 
-	require "#{@config['installdir']}/etc/sysstat.conf.rb"
 
   @sysstat = Smain.new(@config)
   @sysstat.get_data

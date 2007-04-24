@@ -1,4 +1,4 @@
-#!RUBYBIN
+#!/usr/bin/env ruby
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -51,7 +51,7 @@ class Smain
 	    require "#{modul}.rb"
 	    @@modules[modul] = Object.const_get(modul).new(@@config)
 
-	    # Check if databases exist and create if needed
+	    # Checks if databases exist and create if needed
       @@modules[modul].mkdb
     end
   end

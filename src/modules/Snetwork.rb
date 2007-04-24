@@ -1,4 +1,4 @@
-#!RUBYBIN
+#!/usr/bin/env ruby
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
@@ -34,7 +34,7 @@ class Snetwork
 
 	def initialize(config)
 		@@config = config
-		@@config["net_interfaces"].split().each do |interface|
+		@@config['net_interfaces'].split().each do |interface|
 		  @@rrd[interface] = RRDtool.new("#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd")
 			@@data[interface] = Hash.new
 			@@data[interface]['in'] = 0
@@ -43,7 +43,7 @@ class Snetwork
 	end
 
 	def mkdb
-		@@config["net_interfaces"].split().each do |interface|
+		@@config['net_interfaces'].split().each do |interface|
 		  if(!FileTest.exist?(@@rrd[interface].rrdname))
 	      @@rrd[interface].create(@@config['step']), Time.now.to_i-1,
 			    ["DS:in:COUNTER:#{@@config['step']+60}:0:U",
@@ -57,15 +57,14 @@ class Snetwork
 	end
 
 	def get
-		@@config["net_interfaces"].split().each do |interface|
+		@@config['net_interfaces'].split().each do |interface|
 			if(@@config['os'] == "freebsd6")
 				@output = %x[netstat -ib]
 				@output.each do |line|
 					regex = Regexp.new(interface)
 					if(line =~ regex and line =~ /Link/)
-						linea = line.split()
-						@@data[interface]["in"] = line.split()[6]
-						@@data[interface]["out"] = line.split()[9]
+						@@data[interface]['in'] = line.split()[6]
+						@@data[interface]['out'] = line.split()[9]
 					end
 				end
 			elsif(@@config['os'] == "linux2.6")
@@ -73,8 +72,8 @@ class Snetwork
 				@output.each do |line|
 					if(line =~ /bytes/) 
 						linea = line.split()
-						@@data[interface]["in"] = linea[1].split(":")[2]
-						@@data[interface]["out"] = linea[8].split(":")[2]
+						@@data[interface]['in'] = linea[1].split(":")[2]
+						@@data[interface]['out'] = linea[8].split(":")[2]
 					end
 				end
 			end
@@ -82,7 +81,7 @@ class Snetwork
 	end
 
 	def write
-		@@config["net_interfaces"].split().each do |interface|
+		@@config['net_interfaces'].split().each do |interface|
 		  @@rrd[interface].update("in:out",
 		    ["N:#{@@data[interface]['in']}:#{@@data[interface]['out']}"])
 		end
@@ -103,7 +102,7 @@ class Snetwork
 			@suffix = "year"
 		end
 
-		@@config["net_interfaces"].split().each do |interface|
+		@@config['net_interfaces'].split().each do |interface|
       @@rrd[interface].graph(
         ["#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png",
          "--title", "Network Interface #{interface}",
@@ -116,13 +115,13 @@ class Snetwork
 			   "--color", "SHADEB#ffffff",
 			   "--color", "BACK#ffffff",
 			   "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n\"",
-			   "DEF:r=#{@@rrd.rrdname}:in:AVERAGE",
+			   "DEF:r=#{@@rrd[interface].rrdname}:in:AVERAGE",
 			   "CDEF:rx=r,8,*", "AREA:rx#00dd00:\"Inbound \"",
 			   "VDEF:rxlast=rx,LAST", "GPRINT:rxlast:\" %12.3lf %s\"",
 			   "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:\"%12.3lf %s\"",
 			   "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:\"%12.3lf %s\"",
 			   "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:\"%12.1lf %sb\\n\"",
-			   "DEF:t=#{@@rrd.rrdname}:out:AVERAGE",
+			   "DEF:t=#{@@rrd[interface].rrdname}:out:AVERAGE",
 			   "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
 			   "AREA:txa#0000ff:\"Outbound \"",
 			   "VDEF:txlast=tx,LAST", "GPRINT:txlast:\"%12.3lf %s\"",

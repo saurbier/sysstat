@@ -1,4 +1,4 @@
-#!RUBYBIN
+#!/usr/bin/env ruby
 
 # Copyright (c) 2006,2007 Konstantin Saurbier 
 # All rights reserved.
