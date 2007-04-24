@@ -27,9 +27,9 @@
 # SUCH DAMAGE.
 
 # Initialize variable with default values
-PREFIX=		"/usr/local/sysstat"
-GRAPHDIR=	"$PREFIX/output"
-DBDIR=		"$PREFIX/db"
+PREFIX="/usr/local/sysstat"
+GRAPHDIR="$PREFIX/output"
+DBDIR="$PREFIX/db"
 
 # Read arguments
 while getopts hI:O:P:s:S: ARGS; do
@@ -50,38 +50,38 @@ while getopts hI:O:P:s:S: ARGS; do
 			exit
 			;;
 		I)
-			PREFIX=		"$OPTARG"
+			PREFIX="$OPTARG"
 			;;
 		O)
-			GRAPHDIR=	"$OPTARG"
+			GRAPHDIR="$OPTARG"
 			;;
 		s)	
-			STEP=		$(($(($OPTARG / 60)) * 60))
+			STEP=$(($(($OPTARG / 60)) * 60))
 			;;
 		S)
-			GSTEP=		$(($(($OPTARG / 300)) * 300))
+			GSTEP=$(($(($OPTARG / 300)) * 300))
 	esac
 done
 
 # Prepare variables
-PREFIX=		$(echo $PREFIX | sed "s:*/$::")
-CONF=		"$PREFIX/etc/sysstat.conf.rb"
-DBDIR=		"$PREFIX/db"
-GRAPHDIR=	$(echo $GRAPHDIR | sed "s:*/$::")
+PREFIX=$(echo $PREFIX | sed "s:*/$::")
+CONF="$PREFIX/etc/sysstat.conf.rb"
+DBDIR="$PREFIX/db"
+GRAPHDIR=$(echo $GRAPHDIR | sed "s:*/$::")
 
 if [ `uname -s` = "FreeBSD" ]; then
-	RAM=	"$(sysctl -n hw.physmem)"
-	SWAP=	"$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))"
+	RAM="$(sysctl -n hw.physmem)"
+	SWAP="$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))"
 	OS=	"freebsd6"
 elif [ `uname -s` = "Linux" ]; then
-	RAM=	"$(($(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}') * 1024))
-	SWAP=	"$(($(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}') * 1024))
-	OS=	"linux2.6"
+	RAM="$(($(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}') * 1024))
+	SWAP="$(($(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}') * 1024))
+	OS="linux2.6"
 fi
 
-HDDS= $(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | \
+HDDS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | \
 		cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
-INTERFACES= $(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
+INTERFACES=$(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
 		tr ":" " " | tr "\n" " " | sed 's: $::')
 
 # Create temporary files and directories
