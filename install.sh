@@ -131,6 +131,9 @@ mv tmp/index.html.tmp tmp/index.html
 
 rm tmp/network.html
 
+# Create rc/init script
+cp src/rc/syssat.sh tmp/sysstat.sh
+
 # Install files
 if [ `uname -s` = "FreeBSD" ]; then
     install -d -o root -g wheel -m 755 $PREFIX
@@ -143,6 +146,7 @@ if [ `uname -s` = "FreeBSD" ]; then
         install -S -o root -g wheel -m 644 $i $PREFIX/lib
     done
     install -S -o root -g wheel -m 755 tmp/sysstat.rb $PREFIX/bin
+    install -S -o root -g wheel -m 755 tmp/sysstat.sh $PREFIX/bin
     install -d -o root -g wheel -m 755 $GRAPHDIR
     for i in $(ls tmp/*.html); do
         install -S -o root -g wheel -m 644 $i $GRAPHDIR
@@ -153,11 +157,12 @@ elif [ `uname -s` = "Linux" ]; then
     install -d -o root -g root -m 755 $PREFIX/etc
     install -d -o root -g root -m 755 $PREFIX/db
     install -d -o root -g root -m 755 $PREFIX/lib
-    install -o root -g root -m 755 tmp/sysstat.rb $PREFIX/bin
     install -o root -g root -m 644 tmp/sysstat.conf $PREFIX/etc
     for i in $(ls tmp/S*.rb); do
         install -o root -g root -m 644 $i $PREFIX/lib
     done
+    install -o root -g root -m 755 tmp/sysstat.rb $PREFIX/bin
+    install -o root -g root -m 755 tmp/sysstat.sh $PREFIX/bin
     install -d -o root -g root -m 755 $GRAPHDIR
     for i in $(ls tmp/*.html); do
         install -o root -g root -m 644 $i $GRAPHDIR
