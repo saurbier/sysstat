@@ -30,6 +30,8 @@
 PREFIX="/usr/local/sysstat"
 GRAPHDIR="$PREFIX/output"
 DBDIR="$PREFIX/db"
+STEP=300
+GINTERVAL=900
 
 # Read arguments
 while getopts hI:O:P:s:S: ARGS; do
@@ -59,7 +61,7 @@ while getopts hI:O:P:s:S: ARGS; do
 			STEP=$(($(($OPTARG / 60)) * 60))
 			;;
 		S)
-			GSTEP=$(($(($OPTARG / 300)) * 300))
+			GINTERVAL=$(($(($OPTARG / 300)) * 300))
 	esac
 done
 
@@ -94,7 +96,7 @@ cat src/conf/sysstat.conf | \
 	sed "s:GRAPHDIR:$GRAPHDIR:" | \
 	sed "s:DBDIR:$DBDIR:" | \
 	sed "s:STEP:$STEP:" | \
-	sed "s:GSTEP:$GSTEP:" | \
+	sed "s:GINTERVAL:$GINTERVAL:" | \
 	sed "s:INTERFACES:$INTERFACES:" | \
 	sed "s:HDDS:$HDDS:" | \
 	sed "s:RAM:$RAM:" | \

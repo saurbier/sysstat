@@ -28,16 +28,16 @@
 # Ingore HANGUP signal
 Signal.trap('HUP', 'IGNORE')
 
-@conffile = "INSTALLDIR/etc/sysstat.conf"
-@childs = Hash.new
-@modules = Hash.new
-@config = Hash.new
+@config = "INSTALLDIR/etc/sysstat.conf"
 $SVERSION = "2.7"
+
+# Add lib directories to include path
+$: << "INSTALLDIR/lib"
 
 # Load main functions
 #require "getoptlong.rb"
-require "rubygems"
 require "RRDtool"
+require "Smain.rb"
 
 # Get arguments
 #opts = GetoptLong.new
@@ -46,10 +46,10 @@ require "RRDtool"
 #  ['--config-file',   '-c', GetoptLong::REQUIRE_ARGUMENT],
 #  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
 #  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
-#opts.each do |name arg|
+#opts.each_option do |name arg|
 #  case(name)
 #    when("--config-file")
-#      @conffile = arg
+#      @config = arg
 #
 #    when("--help")
 #      # Display help message
@@ -63,57 +63,29 @@ require "RRDtool"
 #opts.terminate
 
 
-# Read configuration file and set values in @config hash
-f = File.open(@conffile)
-f.each do |line|
-  if(line =~ /^\#/ or line =~ /^\n/)
-  else
-    linea = line.split(/=/)
-    if(linea[0] == "step" or linea[0] == "graph_interval")
-      @config[linea[0]] = linea[1].strip!.squeeze(" ").to_i
-    else
-      @config[linea[0]] = linea[1].strip!.squeeze(" ")
-    end
-  end
-end
-f.close
+# Initialize main routines
+@sysstat = Smain.new(@config)
 
-# Add lib directories to include path
-$: << "#{@config['installdir']}/lib"
-
-# Read main functions
-require 'Smain.rb'
-
-# Initialize modules
-@modules = Sinitmodules(@config)
-
-# Childs for getting data and writing to database
-@childs["data"] = Sget_data(@config, @modules)
-
-# Childs for creating graphics
-@childs["graph"] = Screate_graph(@config, @modules)
+# Start child processes
+@sysstat.get_data
+@sysstat.create_graphs
 
 # Restart on SIGUSR1
 trap("SIGUSR1") do
   # Kill child processes
-  Skill_childs(@childs)
-  @config = Sreadconf(@conffile)
-  @mocules = Sinitmodules(@config)
-  @childs['data'] = Sget_data(@config, @modules)
-  @childs["graph"] = Screate_graph(@config, @modules)  
+  @sysstat.kill_childs
+  
+  # Reinitialize main routines (and configuration)
+  @sysstat = Smain.new(@config)
+  
+  # Restart child processes
+  @sysstat.get_data
+  @sysstat.create_graphs
 end
 
 # Kill child processes on SIGKILL or SIGTERM
-trap("SIGKILL") do
-  @childs.each do |name, pid|
-    Process.kill("SIGKILL", pid)
-  end
-end
-trap("SIGTERM") do
-  @childs.each do |name, pid|
-    Process.kill("SIGTERM", pid)
-  end
-end
+trap("SIGKILL") do {@sysstat.kill_childs}
+trap("SIGTERM") do {@sysstat.kill_childs}
 
 # Wait for child processes
 Process.wait

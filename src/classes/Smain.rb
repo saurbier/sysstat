@@ -25,112 +25,110 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 
-def Sreadconf(conffile)
-  config = Hash.new
+
+class Smain
+  @@childs = Hash.new
+  @@modules = Hash.new
+  @@config = Hash.new
   
-  # Read configuration file and set values in @@config hash
-  f = File.open(conffile)
-  f.each do |line|
-    if(line =~ /^#/ or line =~ /^\n/)
-    else
-      linea = line.split(/=/)
-      if(linea[0] == "step" or linea[0] == "graph_interval")
-        config[linea[0]] = linea[1].strip!.squeeze(" ").to_i
+  def initialize(config)
+    # Read configuration file and set values in @@config hash
+    f = File.open(config)
+    f.each do |line|
+      if(line =~~/^#/)
+        continue
+      elsif(line =~ /^\n/)
+        continue
       else
-        config[linea[0]] = linea[1].strip!.squeeze(" ")
+        linea = line.split(/ /)
+        @@config[linea[0]] = linea[2]
       end
     end
+    f.close
+    
+    # Initialize modules
+    @@config['modules'].split().each do |modul|
+	    # Load modules and initialize them
+	    require "#{modul}.rb"
+	    @@modules[modul] = Object.const_get(modul).new(@@config)
+
+	    # Checks if databases exist and create if needed
+      @@modules[modul].mkdb
+    end
   end
-  f.close
-  
-  return config
-end
 
-def Sinitmodules(config)
-  modules = Hash.new
-  # Initialize modules
-  config['modules'].split().each do |modul|
-    # Load modules and initialize them
-    require "#{modul}.rb"
-    modules[modul] = Object.const_get(modul).new(config)
+  # Childs for getting data and writing to database
+  def get_data
+	  @@childs["data"] = Process.fork do
+	    # Ignore HANUP signal
+      trap('HUP', 'IGNORE')
+      
+      # Exit on SIGTERM or SIGKILL
+		  trap("SIGTERM") { Process.exit!(0) }
+		  trap("SIGKILL") { Process.exit!(0) }
 
-    # Checks if databases exist and create if needed
-    modules[modul].mkdb
-  end
-  return modules
-end
+      # Initialize time object
+		  time = Time.now
 
-# Childs for getting data and writing to database
-def Sget_data(config, modules)
-  return Process.fork do
-    # Ignore HANUP signal
-    trap('HUP', 'IGNORE')
-
-    # Exit on SIGTERM or SIGKILL
-	  trap("SIGTERM") { Process.exit!(0) }
-	  trap("SIGKILL") { Process.exit!(0) }
-
-    # Initialize time object
-	  time = Time.now
-
-    # Get and write data in endless loop
-	  loop do
-	    # Check if enough time since last update has gone
-		  if(time <= Time.now)
-		    # Increment time object with @@config['step'] seconds
-			  time = Time.now + config['step']
-
-			  # Get and write data for every module
-			  config['modules'].split().each do |modul|
-				  modules[modul].get
-				  modules[modul].write
+      # Get and write data in endless loop
+		  loop do
+		    # Check if enough time since last update has gone
+			  if(time <= Time.now)
+			    # Increment time object with @@config['step'] seconds
+				  time = Time.now + @@config['step']
+				  
+				  # Get and write data for every module
+				  @@config['modules'].split().each do |modul|
+					  @@modules[modul].get
+					  @@modules[modul].write
+				  end
 			  end
+			  
+			  # Sleep until next run
+			  sleep 30
 		  end
-
-		  # Sleep until next run
-		  sleep 30
 	  end
   end
-end
 
-# Childs for creating graphics 
-def Screate_graphs(config, modules)
-  return Process.fork do
-    # Ignore HANUP signal
-    trap('HUP', 'IGNORE')
+  # Childs for creating graphics 
+  def create_graphs
+	  @@childs["graph"] = Process.fork do
+	    # Ignore HANUP signal
+      trap('HUP', 'IGNORE')
+      
+      # Exit on SIGTERM or SIGKILL
+		  trap("SIGTERM") { Process.exit!(0) }
+		  trap("SIGKILL") { Process.exit!(0) }
 
-    # Exit on SIGTERM or SIGKILL
-	  trap("SIGTERM") { Process.exit!(0) }
-	  trap("SIGKILL") { Process.exit!(0) }
-
-    # Initialize time object	
-	  time = Time.now
-
-    # Create graphs in endless loop
-	  loop do
-	    # Check if enough time since last update has gone
-		  if(time <= Time.now)
-		    # Increment time object with @@config['graph_interval'] seconds
-			  time = Time.now + config['graph_interval']
-
-			  # Create graphs for every module
-			  config['modules'].split().each do |modul|
-				  modules[modul].graph("day")
-				  modules[modul].graph("week")
-				  modules[modul].graph("month")
-				  modules[modul].graph("year")
+      # Initialize time object	
+		  time = Time.now
+	
+      # Create graphs in endless loop
+		  loop do
+		    # Check if enough time since last update has gone
+			  if(time <= Time.now)
+			    # Increment time object with @@config['graph_interval'] seconds
+				  time = Time.now + @@config['graph_interval']
+				  
+				  # Create graphs for every module
+				  @@config['modules'].split().each do |modul|
+					  @@modules[modul].graph("day")
+					  @@modules[modul].graph("week")
+					  @@modules[modul].graph("month")
+					  @@modules[modul].graph("year")
+				  end
 			  end
-	  end
-
-		  # Sleep until next run
-		  sleep 60
+			  
+			  # Sleep until next run
+			  sleep 60
+		  end
 	  end
   end
-end
 
-def Skill_childs(childs)
-  # Send all childs a KILL signal
-  childs.each do |name pid|
-	  Process.kill("SIGKILL", pid)
+  def kill_childs
+    # Send all childs a KILL signal
+    @@childs.each do |name, pid|
+  	  Process.kill("SIGKILL", pid)
+    end
   end
 end
