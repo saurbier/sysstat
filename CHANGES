@@ -1,3 +1,6 @@
+Version 2.11 - 2007-04.26
+	- Added rc/init script
+
 Version 2.10 - 2007-04-26
     - Added usage of GetoptLong
 	- All files, indent: Converted tabs to spaces
