@@ -63,7 +63,7 @@ require "RRDtool"
 #opts.terminate
 
 
-# Read configuration file and set values in @@config hash
+# Read configuration file and set values in @config hash
 f = File.open(@conffile)
 f.each do |line|
   if(line =~ /^\#/ or line =~ /^\n/)
@@ -81,101 +81,26 @@ f.close
 # Add lib directories to include path
 $: << "#{@config['installdir']}/lib"
 
-# Initialize modules
-@config['modules'].split().each do |modul|
-  # Load modules and initialize them
-  require "#{modul}.rb"
-  @modules[modul] = Object.const_get(modul).new(@config)
+# Read main functions
+require 'Smain.rb'
 
-  # Checks if databases exist and create if needed
-  @modules[modul].mkdb
-end
+# Initialize modules
+@modules = Sinitmodules(@config)
 
 # Childs for getting data and writing to database
-@childs["data"] = Process.fork do
-  # Ignore HANUP signal
-  trap('HUP', 'IGNORE')
-
-  # Exit on SIGTERM or SIGKILL
-  trap("SIGTERM") { Process.exit!(0) }
-  trap("SIGKILL") { Process.exit!(0) }
-
-  # Initialize time object
-  time = Time.now
-
-  # Get and write data in endless loop
-  loop do
-    # Check if enough time since last update has gone
-    if(time <= Time.now)
-      # Increment time object with @@config['step'] seconds
-      time = Time.now + @config['step']
-
-      # Get and write data for every module
-      @config['modules'].split().each do |modul|
-        @modules[modul].get
-        @modules[modul].write
-      end
-    end
-
-    # Sleep until next run
-    sleep 30
-  end
-end
+@childs["data"] = Sget_data(@config, @modules)
 
 # Childs for creating graphics
-@childs["graph"] = Process.fork do
-  # Ignore HANUP signal
-  trap('HUP', 'IGNORE')
-
-  # Exit on SIGTERM or SIGKILL
-  trap("SIGTERM") { Process.exit!(0) }
-  trap("SIGKILL") { Process.exit!(0) }
-
-  # Initialize time object	
-  time = Time.now
-
-  # Create graphs in endless loop
-  loop do
-    # Check if enough time since last update has gone
-    if(time <= Time.now)
-      # Increment time object with @@config['graph_interval'] seconds
-      time = Time.now + @config['graph_interval']
-
-      # Create graphs for every module
-      @config['modules'].split().each do |modul|
-        @modules[modul].graph("day")
-        @modules[modul].graph("week")
-        @modules[modul].graph("month")
-        @modules[modul].graph("year")
-      end
-    end
-
-    # Sleep until next run
-    sleep 60
-  end
-end
-
-def kill_childs
-  # Send all childs a KILL signal
-end
-# Initialize main routines
-@sysstat = Smain.new(@config)
-
-# Start child processes
-@sysstat.get_data
-@sysstat.create_graphs
+@childs["graph"] = Screate_graph(@config, @modules)
 
 # Restart on SIGUSR1
 trap("SIGUSR1") do
   # Kill child processes
-  @sysstat.kill_childs
-  
-  # Reinitialize main routines (and configuration)
-  @sysstat = Smain.new(@config)
-  
-  # Restart child processes
-  @sysstat.get_data
-  @sysstat.create_graphs
+  Skill_childs(@childs)
+  @config = Sreadconf(@conffile)
+  @mocules = Sinitmodules(@config)
+  @childs['data'] = Sget_data(@config, @modules)
+  @childs["graph"] = Screate_graph(@config, @modules)  
 end
 
 # Kill child processes on SIGKILL or SIGTERM
