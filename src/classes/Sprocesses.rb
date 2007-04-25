@@ -28,74 +28,74 @@
 
 
 class Sprocesses
-	@@config = 0
-	@@data = Hash.new 
+  @@config = 0
+  @@data = Hash.new 
 
-	def initialize(config)
-		@@config = config
-		@@data['processes'] = 0
-		@@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['_prefix']}.rrd")		
-	end
+  def initialize(config)
+    @@config = config
+    @@data['processes'] = 0
+    @@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['_prefix']}.rrd")    
+  end
 
-	def mkdb
-	  if(!FileTest.exist?(@@rrd.rrdname))
-	    @@rrd.create(@@config['step'], Time.now.to_i-1,
-			  ["DS:processes:GAUGE:#{@@config['step']+60}:0:U",
-			   "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-			   "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-			   "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-			   "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
-		end
-	end
+  def mkdb
+    if(!FileTest.exist?(@@rrd.rrdname))
+      @@rrd.create(@@config['step'], Time.now.to_i-1,
+        ["DS:processes:GAUGE:#{@@config['step']+60}:0:U",
+         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+    end
+  end
 
-	def get
-		@@data['processes'] = 0
+  def get
+    @@data['processes'] = 0
 
-		@output = %x[ps hax]
-		@output.each do |line|
-			@@data['processes'] += 1
-		end
-	end
+    @output = %x[ps hax]
+    @output.each do |line|
+      @@data['processes'] += 1
+    end
+  end
 
-	def write
-	  @@rrd.update("processes", ["N:#{@@data['processes']}"])
-	end
+  def write
+    @@rrd.update("processes", ["N:#{@@data['processes']}"])
+  end
 
-	def graph(timeframe)
-		@time = timeframe
-		
-		if(@time == "day")
-			@start = -86400
-			@suffix = "day"
-		elsif(@time == "week")
-			@start = -604800
-			@suffix = "week"
-		elsif(@time == "month")
-			@start = -2678400
-			@suffix = "month"
-		elsif(@time == "year")
-			@start = -31536000
-			@suffix = "year"
-		end
+  def graph(timeframe)
+    @time = timeframe
+    
+    if(@time == "day")
+      @start = -86400
+      @suffix = "day"
+    elsif(@time == "week")
+      @start = -604800
+      @suffix = "week"
+    elsif(@time == "month")
+      @start = -2678400
+      @suffix = "month"
+    elsif(@time == "year")
+      @start = -31536000
+      @suffix = "year"
+    end
 
     RRDtool.graph(
       ["#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix}.png",
-			 "--title", "Number of processes",
-			 "--start", "#{@start}", 
-			 "--interlace",
-			 "--imgformat", "PNG",
-			 "--width=600", "--height=150",
-			 "--vertical-label", "processes",
-			 "--color", "SHADEA#ffffff",
-			 "--color", "SHADEB#ffffff",
-			 "--color", "BACK#ffffff",
-			 "DEF:processes=#{@@rrd.rrdname}:processes:AVERAGE",
-			 "LINE1:processes#ff0000:\"Process count\"",
-			 "VDEF:auswertung1=processes,AVERAGE",
-			 "GPRINT:auswertung1:\"Average process count\\: %lg\"",
-			 "DEF:maxaus=#{@@rrd.rrdname}:processes:MAX",
-			 "VDEF:maxaus1=maxaus,MAXIMUM",
-			 "GPRINT:maxaus1:\"Maximum process count\\: %lg\""])
-	end
+       "--title", "Number of processes",
+       "--start", "#{@start}", 
+       "--interlace",
+       "--imgformat", "PNG",
+       "--width=600", "--height=150",
+       "--vertical-label", "processes",
+       "--color", "SHADEA#ffffff",
+       "--color", "SHADEB#ffffff",
+       "--color", "BACK#ffffff",
+       "DEF:processes=#{@@rrd.rrdname}:processes:AVERAGE",
+       "LINE1:processes#ff0000:\"Process count\"",
+       "VDEF:auswertung1=processes,AVERAGE",
+       "GPRINT:auswertung1:\"Average process count\\: %lg\"",
+       "DEF:maxaus=#{@@rrd.rrdname}:processes:MAX",
+       "VDEF:maxaus1=maxaus,MAXIMUM",
+       "GPRINT:maxaus1:\"Maximum process count\\: %lg\""])
+  end
 end
 

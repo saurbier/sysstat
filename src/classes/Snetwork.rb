@@ -28,107 +28,107 @@
 
 
 class Snetwork
-	@@config = 0
-	@@data = Hash.new 
-	@@rrd = Hash.new
+  @@config = 0
+  @@data = Hash.new 
+  @@rrd = Hash.new
 
-	def initialize(config)
-		@@config = config
-		@@config['net_interfaces'].split().each do |interface|
-		  @@rrd[interface] = RRDtool.new("#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd")
-			@@data[interface] = Hash.new
-			@@data[interface]['in'] = 0
-			@@data[interface]['out'] = 0
-		end
-	end
+  def initialize(config)
+    @@config = config
+    @@config['net_interfaces'].split().each do |interface|
+      @@rrd[interface] = RRDtool.new("#{@@config['dbdir']}/#{@@config['network_prefix']}-#{interface}.rrd")
+      @@data[interface] = Hash.new
+      @@data[interface]['in'] = 0
+      @@data[interface]['out'] = 0
+    end
+  end
 
-	def mkdb
-		@@config['net_interfaces'].split().each do |interface|
-		  if(!FileTest.exist?(@@rrd[interface].rrdname))
-	      @@rrd[interface].create(@@config['step'], Time.now.to_i-1,
-			    ["DS:in:COUNTER:#{@@config['step']+60}:0:U",
-			     "DS:out:COUNTER:#{@@config['step']+60}:0:U",
-			     "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-			     "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-			     "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-			     "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
-			end
-		end
-	end
+  def mkdb
+    @@config['net_interfaces'].split().each do |interface|
+      if(!FileTest.exist?(@@rrd[interface].rrdname))
+        @@rrd[interface].create(@@config['step'], Time.now.to_i-1,
+          ["DS:in:COUNTER:#{@@config['step']+60}:0:U",
+           "DS:out:COUNTER:#{@@config['step']+60}:0:U",
+           "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+           "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+           "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+           "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+      end
+    end
+  end
 
-	def get
-		@@config['net_interfaces'].split().each do |interface|
-			if(@@config['os'] == "freebsd6")
-				@output = %x[netstat -ib]
-				@output.each do |line|
-					regex = Regexp.new(interface)
-					if(line =~ regex and line =~ /Link/)
-						@@data[interface]['in'] = line.split()[6]
-						@@data[interface]['out'] = line.split()[9]
-					end
-				end
-			elsif(@@config['os'] == "linux2.6")
-				@output = %x[ifconfig #{interface}]
-				@output.each do |line|
-					if(line =~ /bytes/) 
-						linea = line.split()
-						@@data[interface]['in'] = linea[1].split(":")[2]
-						@@data[interface]['out'] = linea[8].split(":")[2]
-					end
-				end
-			end
-		end
-	end
+  def get
+    @@config['net_interfaces'].split().each do |interface|
+      if(@@config['os'] == "freebsd6")
+        @output = %x[netstat -ib]
+        @output.each do |line|
+          regex = Regexp.new(interface)
+          if(line =~ regex and line =~ /Link/)
+            @@data[interface]['in'] = line.split()[6]
+            @@data[interface]['out'] = line.split()[9]
+          end
+        end
+      elsif(@@config['os'] == "linux2.6")
+        @output = %x[ifconfig #{interface}]
+        @output.each do |line|
+          if(line =~ /bytes/) 
+            linea = line.split()
+            @@data[interface]['in'] = linea[1].split(":")[2]
+            @@data[interface]['out'] = linea[8].split(":")[2]
+          end
+        end
+      end
+    end
+  end
 
-	def write
-		@@config['net_interfaces'].split().each do |interface|
-		  @@rrd[interface].update("in:out",
-		    ["N:#{@@data[interface]['in']}:#{@@data[interface]['out']}"])
-		end
-	end
+  def write
+    @@config['net_interfaces'].split().each do |interface|
+      @@rrd[interface].update("in:out",
+        ["N:#{@@data[interface]['in']}:#{@@data[interface]['out']}"])
+    end
+  end
 
-	def graph(time)
-		if(time == "day")
-			@start = -86400
-			@suffix = "day"
-		elsif(time == "week")
-			@start = -604800
-			@suffix = "week"
-		elsif(time == "month")
-			@start = -2678400
-			@suffix = "month"
-		elsif(time == "year")
-			@start = -31536000
-			@suffix = "year"
-		end
+  def graph(time)
+    if(time == "day")
+      @start = -86400
+      @suffix = "day"
+    elsif(time == "week")
+      @start = -604800
+      @suffix = "week"
+    elsif(time == "month")
+      @start = -2678400
+      @suffix = "month"
+    elsif(time == "year")
+      @start = -31536000
+      @suffix = "year"
+    end
 
-		@@config['net_interfaces'].split().each do |interface|
+    @@config['net_interfaces'].split().each do |interface|
       RRDtool.graph(
         ["#{@@config['graphdir']}/#{@@config['network_prefix']}-#{interface}-#{@suffix}.png",
          "--title", "Network Interface #{interface}",
          "--start", "#{@start}", 
          "--interlace",
-			   "--imgformat", "PNG",
-			   "--width=600", "--height=150",
-			   "--vertical-label", "Bits/s",
-			   "--color", "SHADEA#ffffff",
-			   "--color", "SHADEB#ffffff",
-			   "--color", "BACK#ffffff",
-			   "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n\"",
-			   "DEF:r=#{@@rrd[interface].rrdname}:in:AVERAGE",
-			   "CDEF:rx=r,8,*", "AREA:rx#00dd00:\"Inbound \"",
-			   "VDEF:rxlast=rx,LAST", "GPRINT:rxlast:\" %12.3lf %s\"",
-			   "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:\"%12.3lf %s\"",
-			   "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:\"%12.3lf %s\"",
-			   "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:\"%12.1lf %sb\\n\"",
-			   "DEF:t=#{@@rrd[interface].rrdname}:out:AVERAGE",
-			   "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
-			   "AREA:txa#0000ff:\"Outbound \"",
-			   "VDEF:txlast=tx,LAST", "GPRINT:txlast:\"%12.3lf %s\"",
-			   "VDEF:txave=tx,AVERAGE", "GPRINT:txave:\"%12.3lf %s\"",
-			   "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:\"%12.3lf %s\"",
-			   "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:\"%12.1lf %sb\""])
-		end
-	end
+         "--imgformat", "PNG",
+         "--width=600", "--height=150",
+         "--vertical-label", "Bits/s",
+         "--color", "SHADEA#ffffff",
+         "--color", "SHADEB#ffffff",
+         "--color", "BACK#ffffff",
+         "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n\"",
+         "DEF:r=#{@@rrd[interface].rrdname}:in:AVERAGE",
+         "CDEF:rx=r,8,*", "AREA:rx#00dd00:\"Inbound \"",
+         "VDEF:rxlast=rx,LAST", "GPRINT:rxlast:\" %12.3lf %s\"",
+         "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:\"%12.3lf %s\"",
+         "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:\"%12.3lf %s\"",
+         "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:\"%12.1lf %sb\\n\"",
+         "DEF:t=#{@@rrd[interface].rrdname}:out:AVERAGE",
+         "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
+         "AREA:txa#0000ff:\"Outbound \"",
+         "VDEF:txlast=tx,LAST", "GPRINT:txlast:\"%12.3lf %s\"",
+         "VDEF:txave=tx,AVERAGE", "GPRINT:txave:\"%12.3lf %s\"",
+         "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:\"%12.3lf %s\"",
+         "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:\"%12.1lf %sb\""])
+    end
+  end
 end
 

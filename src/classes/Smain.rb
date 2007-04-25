@@ -35,100 +35,108 @@ class Smain
     # Read configuration file and set values in @@config hash
     f = File.open(config)
     f.each do |line|
-      if(line =~~/^#/)
-        continue
-      elsif(line =~ /^\n/)
-        continue
+      if(line =~ /^#/ or line =~ /^\n/)
       else
         linea = line.split(/ /)
-        @@config[linea[0]] = linea[2]
+        if(linea[0] == "step" or linea[0] == "graph_interval")
+          @@config[linea[0]] = linea[1].strip!.squeeze(" ").to_i
+        else
+          @@config[linea[0]] = linea[1].strip!.squeeze(" ")
+        end
       end
     end
     f.close
     
     # Initialize modules
     @@config['modules'].split().each do |modul|
-	    # Load modules and initialize them
-	    require "#{modul}.rb"
-	    @@modules[modul] = Object.const_get(modul).new(@@config)
+      # Load modules and initialize them
+      require "#{modul}.rb"
+      @@modules[modul] = Object.const_get(modul).new(@@config)
 
-	    # Checks if databases exist and create if needed
+      # Checks if databases exist and create if needed
       @@modules[modul].mkdb
     end
   end
 
   # Childs for getting data and writing to database
   def get_data
-	  @@childs["data"] = Process.fork do
-	    # Ignore HANUP signal
+    @@childs["data"] = Process.fork do
+      # Ignore HANUP signal
       trap('HUP', 'IGNORE')
       
       # Exit on SIGTERM or SIGKILL
-		  trap("SIGTERM") { Process.exit!(0) }
-		  trap("SIGKILL") { Process.exit!(0) }
+      trap("SIGTERM") { Process.exit!(0) }
+      trap("SIGKILL") { Process.exit!(0) }
 
       # Initialize time object
-		  time = Time.now
+      time = Time.now
 
       # Get and write data in endless loop
-		  loop do
-		    # Check if enough time since last update has gone
-			  if(time <= Time.now)
-			    # Increment time object with @@config['step'] seconds
-				  time = Time.now + @@config['step']
-				  
-				  # Get and write data for every module
-				  @@config['modules'].split().each do |modul|
-					  @@modules[modul].get
-					  @@modules[modul].write
-				  end
-			  end
-			  
-			  # Sleep until next run
-			  sleep 30
-		  end
-	  end
+      loop do
+        # Check if enough time since last update has gone
+        if(time <= Time.now)
+          # Increment time object with @@config['step'] seconds
+          time = Time.now + @@config['step']
+          
+          # Get and write data for every module
+          @@config['modules'].split().each do |modul|
+            @@modules[modul].get
+            @@modules[modul].write
+          end
+        end
+        
+        # Sleep until next run
+        sleep 30
+      end
+    end
   end
 
   # Childs for creating graphics 
   def create_graphs
-	  @@childs["graph"] = Process.fork do
-	    # Ignore HANUP signal
+    @@childs["graph"] = Process.fork do
+      # Ignore HANUP signal
       trap('HUP', 'IGNORE')
       
       # Exit on SIGTERM or SIGKILL
-		  trap("SIGTERM") { Process.exit!(0) }
-		  trap("SIGKILL") { Process.exit!(0) }
+      trap("SIGTERM") { Process.exit!(0) }
+      trap("SIGKILL") { Process.exit!(0) }
 
-      # Initialize time object	
-		  time = Time.now
-	
+      # Initialize time object  
+      time = Time.now
+  
       # Create graphs in endless loop
-		  loop do
-		    # Check if enough time since last update has gone
-			  if(time <= Time.now)
-			    # Increment time object with @@config['graph_interval'] seconds
-				  time = Time.now + @@config['graph_interval']
-				  
-				  # Create graphs for every module
-				  @@config['modules'].split().each do |modul|
-					  @@modules[modul].graph("day")
-					  @@modules[modul].graph("week")
-					  @@modules[modul].graph("month")
-					  @@modules[modul].graph("year")
-				  end
-			  end
-			  
-			  # Sleep until next run
-			  sleep 60
-		  end
-	  end
+      loop do
+        # Check if enough time since last update has gone
+        if(time <= Time.now)
+          # Increment time object with @@config['graph_interval'] seconds
+          time = Time.now + @@config['graph_interval']
+          
+          # Create graphs for every module
+          @@config['modules'].split().each do |modul|
+            @@modules[modul].graph("day")
+            @@modules[modul].graph("week")
+            @@modules[modul].graph("month")
+            @@modules[modul].graph("year")
+          end
+        end
+        
+        # Sleep until next run
+        sleep 60
+      end
+    end
   end
 
   def kill_childs
+    # Send all childs a TERM signal
+    @@childs.each do |name, pid|
+      Process.kill("SIGTERM", pid)
+    end
+
+    sleep 3
+
     # Send all childs a KILL signal
     @@childs.each do |name, pid|
-  	  Process.kill("SIGKILL", pid)
+      Process.kill("SIGKILL", pid)
     end
   end
 end

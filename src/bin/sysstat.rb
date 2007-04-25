@@ -29,38 +29,45 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "INSTALLDIR/etc/sysstat.conf"
-$SVERSION = "2.7"
+$SVERSION = "2.10"
 
 # Add lib directories to include path
 $: << "INSTALLDIR/lib"
 
-# Load main functions
-#require "getoptlong.rb"
+# Load modules and classes
+require "getoptlong.rb"
+require "rubygems"
 require "RRDtool"
 require "Smain.rb"
 
 # Get arguments
-#opts = GetoptLong.new
-#opts.ordering(GetoptLong::PERMUTE)
-#opts.set_options(
-#  ['--config-file',   '-c', GetoptLong::REQUIRE_ARGUMENT],
-#  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
-#  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
-#opts.each_option do |name arg|
-#  case(name)
-#    when("--config-file")
-#      @config = arg
-#
-#    when("--help")
-#      # Display help message
-#      puts "help"
-#
-#    when("--version")
-#      # Display Version
-#      puts "Sysstat #{$SVERSION}"
-#  end
-#end
-#opts.terminate
+options = GetoptLong.new
+options.set_options(
+  ['--config-file',   '-c', GetoptLong::REQUIRED_ARGUMENT],
+  ['--help',          '-h', GetoptLong::NO_ARGUMENT],
+  ['--version',       '-v', GetoptLong::NO_ARGUMENT])
+options.each_option do |name, arg|
+  case(name)
+    when("--config-file")
+      @config = arg
+
+    when("--help")
+      # Display help message
+      puts "Usage: sysstat.rb [option...]"
+      puts "Options:"
+      puts "  -c FILE  --config-file FILE    Use config file FILE"
+      puts "  -h  --help                     Output this help, then exit"
+      puts "  -v  --version                  Output version number, then exit"
+      Kernel.exit!
+
+    when("--version")
+      # Display Version
+      puts "Sysstat #{$SVERSION}"
+      puts "  (c)2006,2007 Konstantin Saurbier"
+      Kernel.exit!
+  end
+end
+options.terminate
 
 
 # Initialize main routines
@@ -81,11 +88,16 @@ trap("SIGUSR1") do
   # Restart child processes
   @sysstat.get_data
   @sysstat.create_graphs
+
+  # Wait for child processes
+  Process.wait
+  Process.wait
 end
 
 # Kill child processes on SIGKILL or SIGTERM
-trap("SIGKILL") do {@sysstat.kill_childs}
-trap("SIGTERM") do {@sysstat.kill_childs}
+trap("SIGKILL") {@sysstat.kill_childs}
+trap("SIGTERM") {@sysstat.kill_childs}
 
 # Wait for child processes
+Process.wait
 Process.wait
