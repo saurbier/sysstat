@@ -1,24 +1,24 @@
 Version 2.11 - 2007-04.26
-	- Added rc/init script
+    - Added rc/init script
 
 Version 2.10 - 2007-04-26
     - Added usage of GetoptLong
-	- All files, indent: Converted tabs to spaces
+    - All files, indent: Converted tabs to spaces
 
-Version 2.9 - 2004-04-26
+Version 2.9 - 2007-04-26
     - Fixed trap for reload (added 2*Proccess.wait)
     - Fixed Smain::kill_childs (to SIGTERM, sleep, SIGKILL)
     - Added second Process.wait at end of sysstat.rb
 
-Version 2.8 - 2004-04-24
+Version 2.8 - 2007-04-24
     - Fixed install.sh
     - Fixed sysstat.conf
     - Fixed typo in Sprocesses.rb
     
-Version 2.7 - 2004-04-25
+Version 2.7 - 2007-04-25
     - Fixed multiple bugs and errors
 
-Version 2.6 - 2004-04-24
+Version 2.6 - 2007-04-24
     - Better comments in the code
     - Fixed typos in the install.sh
 
