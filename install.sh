@@ -132,7 +132,7 @@ mv tmp/index.html.tmp tmp/index.html
 rm tmp/network.html
 
 # Create rc/init script
-cp src/rc/sysstat.sh tmp/sysstat.sh
+sed "s:INSTALLDIR:$PREFIX" src/rc/sysstat.sh > tmp/sysstat.sh
 
 # Install files
 if [ `uname -s` = "FreeBSD" ]; then
