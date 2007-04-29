@@ -29,7 +29,7 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "INSTALLDIR/etc/sysstat.conf"
-$SVERSION = "2.11"
+$SVERSION = "2.12"
 
 # Add lib directories to include path
 $: << "INSTALLDIR/lib"
@@ -45,6 +45,7 @@ options = GetoptLong.new
 options.set_options(
   ['--config-file',   '-c', GetoptLong::REQUIRED_ARGUMENT],
   ['--help',          '-h', GetoptLong::NO_ARGUMENT],
+  ['--pid-file',      '-p', GetoptLong::REQUIRED_ARGUMENT]
   ['--version',       '-v', GetoptLong::NO_ARGUMENT])
 options.each_option do |name, arg|
   case(name)
@@ -60,6 +61,10 @@ options.each_option do |name, arg|
       puts "  -v  --version                  Output version number, then exit"
       Kernel.exit!
 
+    when("--pid-file")
+      # Set pidfile
+      @pidfile = arg
+
     when("--version")
       # Display Version
       puts "Sysstat #{$SVERSION}"
@@ -69,6 +74,10 @@ options.each_option do |name, arg|
 end
 options.terminate
 
+# Write Pidfile
+f = File.open(@pidfile, "w")
+f.puts Process.pid
+f.close
 
 # Initialize main routines
 @sysstat = Smain.new(@config)

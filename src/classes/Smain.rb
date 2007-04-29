@@ -33,7 +33,7 @@ class Smain
   
   def initialize(config)
     # Read configuration file and set values in @@config hash
-    f = File.open(config)
+    f = File.open(config, "r")
     f.each do |line|
       if(line =~ /^#/ or line =~ /^\n/)
       else
