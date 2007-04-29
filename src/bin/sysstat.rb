@@ -45,7 +45,7 @@ options = GetoptLong.new
 options.set_options(
   ['--config-file',   '-c', GetoptLong::REQUIRED_ARGUMENT],
   ['--help',          '-h', GetoptLong::NO_ARGUMENT],
-  ['--pid-file',      '-p', GetoptLong::REQUIRED_ARGUMENT]
+  ['--pid-file',      '-p', GetoptLong::REQUIRED_ARGUMENT],
   ['--version',       '-v', GetoptLong::NO_ARGUMENT])
 options.each_option do |name, arg|
   case(name)
@@ -110,3 +110,6 @@ trap("SIGTERM") {@sysstat.kill_childs}
 # Wait for child processes
 Process.wait
 Process.wait
+
+# Remove pidfile
+File.delete(@pidfile)

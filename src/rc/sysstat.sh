@@ -6,7 +6,7 @@ PID_FILE=/var/run/sysstat.pid
 case "$1" in
 'start')
     echo "Starting system statistics: sysstat";
-    $SYSSTAT_RB --pidfile $PID_FILE &
+    $SYSSTAT_RB --pid-file $PID_FILE &
     ;;
 
 'stop')

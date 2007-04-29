@@ -33,11 +33,11 @@ class Smain
   
   def initialize(config)
     # Read configuration file and set values in @@config hash
-    f = File.open(config, "r")
+    f = File.open(config)
     f.each do |line|
       if(line =~ /^#/ or line =~ /^\n/)
       else
-        linea = line.split(/ /)
+        linea = line.split(/=/)
         if(linea[0] == "step" or linea[0] == "graph_interval")
           @@config[linea[0]] = linea[1].strip!.squeeze(" ").to_i
         else

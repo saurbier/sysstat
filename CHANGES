@@ -1,8 +1,8 @@
 Version 2.12 - 2007-04-29
     - Fixed Typo in install.sh
     - Chmod +x as default for install.sh
-    - Added --pid-file/-p argument to sysstat.rb
-    - sysstat.rb now writes pidfile
+    - Added --pid-file argument to sysstat.rb
+    - sysstat.rb now writes and removes pidfile
 
 Version 2.11 - 2007-04.26
     - Added rc/init script
