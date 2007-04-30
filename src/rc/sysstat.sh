@@ -13,7 +13,6 @@ case "$1" in
     echo "Stopping system statistics: sysstat";
     if [ -f $PID_FILE ]; then
         kill `cat $PID_FILE`
-        rm $PID_FILE
     else
         echo "sysstat not running(?)";
     fi
