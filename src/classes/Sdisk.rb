@@ -108,19 +108,19 @@ class Sdisk
          "--color", "BACK#ffffff",
          "DEF:ksize=#{@@rrd[hdd].rrdname}:size:AVERAGE",
          "DEF:kused=#{@@rrd[hdd].rrdname}:used:AVERAGE",
-         "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\\n\"",
-         "CDEF:size=ksize,1024,*",    "LINE1:size#ff0000:\"size\"",
-         "VDEF:sizelast=size,LAST",   "GPRINT:sizelast:\" %12.3lf \"",
-         "VDEF:sizeavg=size,AVERAGE", "GPRINT:sizeavg:\" %12.3lf \"",
-         "VDEF:sizemax=size,MAXIMUM", "GPRINT:sizemax:\" %12.3lf \\n\"",
-         "CDEF:used=kused,1024,*",    "AREA:used#00ff00:\"usage\"",
-         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast:\" %12.3lf \"",
-         "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg:\" %12.3lf \"",
-         "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax:\" %12.3lf \\n\"",
-         "CDEF:free=size,used,-",     "LINE1:free#0000ff:\"free\"",
-         "VDEF:freelast=free,LAST",   "GPRINT:freelast:\" %12.3lf \"",
-         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg:\" %12.3lf \"",
-         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax:\" %12.3lf \\n\""])
+         "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\\n",
+         "CDEF:size=ksize,1024,*",    "LINE1:size#ff0000:size",
+         "VDEF:sizelast=size,LAST",   "GPRINT:sizelast: %12.3lf ",
+         "VDEF:sizeavg=size,AVERAGE", "GPRINT:sizeavg: %12.3lf ",
+         "VDEF:sizemax=size,MAXIMUM", "GPRINT:sizemax: %12.3lf\\n",
+         "CDEF:used=kused,1024,*",    "AREA:used#00ff00:usage",
+         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf ",
+         "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg: %12.3lf ",
+         "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax: %12.3lf\\n",
+         "CDEF:free=size,used,-",     "LINE1:free#0000ff:free",
+         "VDEF:freelast=free,LAST",   "GPRINT:freelast: %12.3lf ",
+         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf ",
+         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf"])
     end
   end
 end

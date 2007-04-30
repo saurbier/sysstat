@@ -32,7 +32,8 @@ case "$1" in
     echo "Restarting system statistics: sysstat";
     if [ -f $PID_FILE ]; then
         kill `cat $PID_FILE`
-        $SYSSTAT_RB --pidfile $PID_FILE &       
+        sleep 3
+        $SYSSTAT_RB --pid-file $PID_FILE &
     else
         echo "sysstat not running(?)";
     fi

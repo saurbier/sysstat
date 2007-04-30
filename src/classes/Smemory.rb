@@ -108,16 +108,16 @@ class Smemory
        "DEF:swap=#{@@rrd.rrdname}:swap:AVERAGE",
        "CDEF:bram=#{@@config['mem_ramtotal']},ram,-",
        "CDEF:bswap=#{@@config['mem_swaptotal']},swap,-",
-       "AREA:bram#99ffff:\"used RAM\\: \"",
+       "AREA:bram#99ffff:used RAM\\: ",
        "VDEF:bramlast=bram,LAST", "VDEF:ramlast=ram,LAST",
        "VDEF:bswaplast=bswap,LAST", "VDEF:swaplast=swap,LAST",
-       "GPRINT:bramlast:\"%4.3lf %sB\"",
-       "LINE1:ram#ff0000:\"free RAM\\: \"",
-       "GPRINT:ramlast:\"%4.3lf %sB\\n\"",
-       "LINE1:bswap#000000:\"used SWAP\\: \"",
-       "GPRINT:bswaplast:\"%4.3lf %sB \"",
-       "LINE1:swap#006600:\"free SWAP\\: \"",
-       "GPRINT:swaplast:\"%4.3lf %sB\""])
+       "GPRINT:bramlast:%4.3lf %sB",
+       "LINE1:ram#ff0000:free RAM\\: ",
+       "GPRINT:ramlast:%4.3lf %sB\\n",
+       "LINE1:bswap#000000:used SWAP\\: ",
+       "GPRINT:bswaplast:%4.3lf %sB ",
+       "LINE1:swap#006600:free SWAP\\: ",
+       "GPRINT:swaplast:%4.3lf %sB"])
   end
 end
 

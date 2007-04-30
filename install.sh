@@ -71,6 +71,7 @@ CONF="$PREFIX/etc/sysstat.conf.rb"
 DBDIR="$PREFIX/db"
 GRAPHDIR=$(echo $GRAPHDIR | sed "s:*/$::")
 
+# Get Ram, Swap and OS
 if [ `uname -s` = "FreeBSD" ]; then
     RAM="$(sysctl -n hw.physmem)"
     SWAP="$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))"
@@ -81,8 +82,11 @@ elif [ `uname -s` = "Linux" ]; then
     OS="linux2.6"
 fi
 
+# Get hard disks
 HDDS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | \
         cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
+
+# Get network interfaces
 INTERFACES=$(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
         tr ":" " " | tr "\n" " " | sed 's: $::')
 
@@ -110,29 +114,35 @@ for i in $(ls src/classes/*.rb); do
     cp $i tmp/$(basename $i)
 done
 
-# Create html files
+# Create html-files
 for i in $(ls src/html/*.html); do
     sed "s:HOSTNAME:$(hostname -s):g" $i > tmp/$(basename $i)
 done
 
+# Create html-files for hard disks
 for i in $HDDS; do
     sed "s:HDD:$i:g" tmp/hdds.html > tmp/hdds-$i.html
-    INDEXHDD=$INDEXHDD"<p><a href=\"./hdds-$i.html\"><img border=\"0\" src=\"hdds-$i-day.png\" alt=\"HDD statistics\"></a></p>\n"
+    INDEXHDD=$INDEXHDD"<p><a href=\"./hdds-$i.html\"><img border=\"0\" src=\"hdds-$i-day.png\" alt=\"HDD statistics\"></a></p>"
 done
 
+# Create html-files for network interfaces
 for i in $INTERFACES; do
     sed "s:INTERFACE:$i:g" tmp/network.html > tmp/net-$i.html
-    INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"><img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>\n"
+    INDEXNET=$INDEXNET"<p><a href=\"./net-$i.html\"><img border=\"0\" src=\"net-$i-day.png\" alt=\"Network statistics\"></a></p>"
 done
 
+# Add network and hard disk related lines to index.html
 sed "s:NETWORK:$INDEXNET:" tmp/index.html | \
     sed "s:HDD:$INDEXHDD:" > tmp/index.html.tmp
 mv tmp/index.html.tmp tmp/index.html
 
+# Remove temporary files
+rm tmp/hdds.html
 rm tmp/network.html
+rm tmp/template.html
 
 # Create rc/init script
-sed "s:INSTALLDIR:$PREFIX" src/rc/sysstat.sh > tmp/sysstat.sh
+sed "s:INSTALLDIR:$PREFIX:" src/rc/sysstat.sh > tmp/sysstat.sh
 
 # Install files
 if [ `uname -s` = "FreeBSD" ]; then

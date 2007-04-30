@@ -29,7 +29,7 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "INSTALLDIR/etc/sysstat.conf"
-$SVERSION = "2.13"
+$SVERSION = "2.14"
 
 # Add lib directories to include path
 $: << "INSTALLDIR/lib"

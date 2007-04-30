@@ -90,12 +90,12 @@ class Sprocesses
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
        "DEF:processes=#{@@rrd.rrdname}:processes:AVERAGE",
-       "LINE1:processes#ff0000:\"Process count\"",
+       "LINE1:processes#ff0000:Process count",
        "VDEF:auswertung1=processes,AVERAGE",
-       "GPRINT:auswertung1:\"Average process count\\: %lg\"",
+       "GPRINT:auswertung1:Average process count\\: %lg",
        "DEF:maxaus=#{@@rrd.rrdname}:processes:MAX",
        "VDEF:maxaus1=maxaus,MAXIMUM",
-       "GPRINT:maxaus1:\"Maximum process count\\: %lg\""])
+       "GPRINT:maxaus1:Maximum process count\\: %lg"])
   end
 end
 

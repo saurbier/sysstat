@@ -114,20 +114,20 @@ class Snetwork
          "--color", "SHADEA#ffffff",
          "--color", "SHADEB#ffffff",
          "--color", "BACK#ffffff",
-         "COMMENT:\"\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n\"",
+         "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\t  Datenvolumen\\n",
          "DEF:r=#{@@rrd[interface].rrdname}:in:AVERAGE",
-         "CDEF:rx=r,8,*", "AREA:rx#00dd00:\"Inbound \"",
-         "VDEF:rxlast=rx,LAST", "GPRINT:rxlast:\" %12.3lf %s\"",
-         "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:\"%12.3lf %s\"",
-         "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:\"%12.3lf %s\"",
-         "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:\"%12.1lf %sb\\n\"",
+         "CDEF:rx=r,8,*", "AREA:rx#00dd00:Inbound ",
+         "VDEF:rxlast=rx,LAST", "GPRINT:rxlast: %12.3lf %s",
+         "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:%12.3lf %s",
+         "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:%12.3lf %s",
+         "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:%12.1lf %sb\\n",
          "DEF:t=#{@@rrd[interface].rrdname}:out:AVERAGE",
          "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
-         "AREA:txa#0000ff:\"Outbound \"",
-         "VDEF:txlast=tx,LAST", "GPRINT:txlast:\"%12.3lf %s\"",
-         "VDEF:txave=tx,AVERAGE", "GPRINT:txave:\"%12.3lf %s\"",
-         "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:\"%12.3lf %s\"",
-         "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:\"%12.1lf %sb\""])
+         "AREA:txa#0000ff:Outbound ",
+         "VDEF:txlast=tx,LAST", "GPRINT:txlast:%12.3lf %s",
+         "VDEF:txave=tx,AVERAGE", "GPRINT:txave:%12.3lf %s",
+         "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:%12.3lf %s",
+         "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:%12.1lf %sb"])
     end
   end
 end

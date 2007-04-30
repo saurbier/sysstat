@@ -1,5 +1,11 @@
+Version 2.14 - 2007-04-30
+    - Fixed install.sh
+    - Fixed index.html
+    - Fixed graphs
+    - Fixed hdd statistics
+
 Version 2.13 - 2007-04-29
-	- First public release
+    - First public release
 
 Version 2.12 - 2007-04-29
     - Fixed Typo in install.sh

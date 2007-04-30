@@ -98,17 +98,17 @@ class Sconnections
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
-       "COMMENT:\"\t\t   Current\t\t  Average\t\t Maximum\\n\"",
+       "COMMENT:\t\t   Current\t\t  Average\t\t Maximum\\n",
        "DEF:tcp=#{@@rrd.rrdname}:tcp:AVERAGE",
-       "LINE1:tcp#ff0000:\"TCP \"",
-       "VDEF:tcplast=tcp,LAST", "GPRINT:tcplast:\" %12.3lf \"",
-       "VDEF:tcpavg=tcp,AVERAGE", "GPRINT:tcpavg:\" %12.3lf \"",
-       "VDEF:tcpmax=tcp,MAXIMUM", "GPRINT:tcpmax:\" %12.3lf \\n\"",
+       "LINE1:tcp#ff0000:TCP ",
+       "VDEF:tcplast=tcp,LAST", "GPRINT:tcplast: %12.3lf ",
+       "VDEF:tcpavg=tcp,AVERAGE", "GPRINT:tcpavg: %12.3lf ",
+       "VDEF:tcpmax=tcp,MAXIMUM", "GPRINT:tcpmax: %12.3lf\\n",
        "DEF:udp=#{@@rrd.rrdname}:udp:AVERAGE",
-       "LINE1:udp#0000ff:\"UDP \"",
-       "VDEF:udplast=udp,LAST", "GPRINT:udplast:\" %12.3lf \"",
-       "VDEF:udpavg=udp,AVERAGE", "GPRINT:udpavg:\" %12.3lf \"",
-       "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax:\" %12.3lf\""])
+       "LINE1:udp#0000ff:UDP ",
+       "VDEF:udplast=udp,LAST", "GPRINT:udplast: %12.3lf ",
+       "VDEF:udpavg=udp,AVERAGE", "GPRINT:udpavg: %12.3lf ",
+       "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax: %12.3lf"])
   end
 end
 
