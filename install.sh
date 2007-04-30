@@ -73,12 +73,12 @@ GRAPHDIR=$(echo $GRAPHDIR | sed "s:*/$::")
 
 # Get Ram, Swap and OS
 if [ `uname -s` = "FreeBSD" ]; then
-    RAM="$(sysctl -n hw.physmem)"
-    SWAP="$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))"
+    RAM=$(sysctl -n hw.physmem)
+    SWAP=$(($(swapinfo -k | tail -1 | awk '{print $2}') * 1024))
     OS="freebsd6"
 elif [ `uname -s` = "Linux" ]; then
-    RAM="$(($(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}') * 1024))
-    SWAP="$(($(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}') * 1024))
+    RAM=$(($(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}') * 1024))
+    SWAP=$(($(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}') * 1024))
     OS="linux2.6"
 fi
 
