@@ -1,0 +1,24 @@
+
+System statistics scripts
+
+1. Requirements
+Install script:
+    - awk
+    - cut
+    - sed
+    - grep
+    
+Runtime:
+    - RRDTool >= 1.2.0
+    - ruby-gems
+    - RubyRRDTool (via rubygems)
+    
+
+2. Installation
+Use the install.sh script for installation. For further help
+read the builtin help:
+
+    ./install.sh -h
+
+The script will create a RC/Init-script which can be copied
+or linked to the proper directories or runlevels.
