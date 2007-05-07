@@ -89,6 +89,7 @@ class Sprocesses
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
+       "--units-exponent", "0",
        "DEF:processes=#{@@rrd.rrdname}:processes:AVERAGE",
        "LINE1:processes#ff0000:Process count",
        "VDEF:auswertung1=processes,AVERAGE",

@@ -46,8 +46,8 @@ class Sdisk
     @@config['hdds'].split().each do |hdd|
       if(!FileTest.exist?(@@rrd[hdd].rrdname))
         @@rrd[hdd].create(@@config['step'], Time.now.to_i-1,
-          ["DS:size:COUNTER:#{@@config['step']+60}:0:U",
-           "DS:used:COUNTER:#{@@config['step']+60}:0:U",
+          ["DS:size:GAUGE:#{@@config['step']+60}:0:U",
+           "DS:used:GAUGE:#{@@config['step']+60}:0:U",
            "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
            "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
            "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
@@ -57,16 +57,13 @@ class Sdisk
   end
 
   def get
-    @@config['hdds'].split().each do |hdd|
-      @@data[hdd]['size'] = %x[df -k | grep ad0s1e | tr -s "[:space:]" | cut -f2 -d" "]
-      @@data[hdd]['used'] = %x[df -k | grep ad0s1e | tr -s "[:space:]" | cut -f3 -d" "]
-      
-      @output = %x[df -k]
+    @@config['hdds'].split().each do |hdd|      
+      @output = %x[df -m]
       @output.each do |line|
         regex = Regexp.new("^/dev/#{hdd}")
         if(line =~ regex)
-          @@data[hdd]['size'] = line.split()[2]
-          @@data[hdd]['used'] = line.split()[3]
+          @@data[hdd]['size'] = line.split()[1]
+          @@data[hdd]['used'] = line.split()[2]
         end
       end
     end
@@ -102,25 +99,24 @@ class Sdisk
          "--interlace",
          "--imgformat", "PNG",
          "--width=600", "--height=150",
-         "--vertical-label", "Bytes",
+         "--vertical-label", "MBytes",
          "--color", "SHADEA#ffffff",
          "--color", "SHADEB#ffffff",
          "--color", "BACK#ffffff",
-         "DEF:ksize=#{@@rrd[hdd].rrdname}:size:AVERAGE",
-         "DEF:kused=#{@@rrd[hdd].rrdname}:used:AVERAGE",
-         "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\\n",
-         "CDEF:size=ksize,1024,*",    "LINE1:size#ff0000:size",
-         "VDEF:sizelast=size,LAST",   "GPRINT:sizelast: %12.3lf ",
-         "VDEF:sizeavg=size,AVERAGE", "GPRINT:sizeavg: %12.3lf ",
-         "VDEF:sizemax=size,MAXIMUM", "GPRINT:sizemax: %12.3lf\\n",
-         "CDEF:used=kused,1024,*",    "AREA:used#00ff00:usage",
-         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf ",
-         "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg: %12.3lf ",
-         "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax: %12.3lf\\n",
-         "CDEF:free=size,used,-",     "LINE1:free#0000ff:free",
-         "VDEF:freelast=free,LAST",   "GPRINT:freelast: %12.3lf ",
-         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf ",
-         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf"])
+         "--base", "1024",
+         "DEF:sizek=#{@@rrd[hdd].rrdname}:size:AVERAGE",
+         "DEF:usedk=#{@@rrd[hdd].rrdname}:used:AVERAGE",
+         "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*"
+         "CDEF:free=size,used,-",
+         "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",
+         "AREA:used#0000ff:usage",
+         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf %sB",
+         "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg: %12.3lf %sB",
+         "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax: %12.3lf %sB\\n",
+         "AREA:free#55dd55:free:STACK",
+         "VDEF:freelast=free,LAST",   "GPRINT:freelast:  %12.3lf %sB",
+         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf %sB",
+         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf %sB"])
     end
   end
 end

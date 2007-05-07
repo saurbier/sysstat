@@ -107,6 +107,7 @@ class Sload
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
+       "--units-exponent", "0",
        "COMMENT:\t\t\t   Current\t     Average\t  Maximum\\n",
        "DEF:load1=#{@@rrd.rrdname}:load1:AVERAGE",
        "DEF:load5=#{@@rrd.rrdname}:load5:AVERAGE",

@@ -52,20 +52,20 @@ class Smemory
     if(@@config['os'] == "freebsd6")
       @output = %x[vmstat]
       @output.each do |line|
-        @@data['fram'] = line.split()[4].to_i*1024
+        @@data['fram'] = line.split()[4].to_i
       end
 
       @output = %x[swapinfo -k]
       @output.each do |line|
-        @@data['fswap'] = line.split()[3].to_i*1024
+        @@data['fswap'] = line.split()[3].to_i
       end
     elsif(@@config['os'] == "linux2.6")
       @output = File.new("/proc/meminfo", "r") 
       @output.each do |line|
         if(line =~ /MemFree:/)
-          @@data['fram'] = line.split()[1].to_i*1024
+          @@data['fram'] = line.split()[1].to_i
         elsif(line =~ /SwapFree:/)
-          @@data['fswap'] = line.split()[1].to_i*1024
+          @@data['fswap'] = line.split()[1].to_i
         end
       end
       @output.close
@@ -73,7 +73,7 @@ class Smemory
   end
 
   def write
-    @@rrd.update("ram:swap", ["N:#{@@data['fram']}:#{@@data['fwap']}"])
+    @@rrd.update("ram:swap", ["N:#{@@data['fram']}:#{@@data['fswap']}"])
   end
 
   def graph(timeframe)
@@ -104,20 +104,23 @@ class Smemory
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
-       "DEF:ram=#{@@rrd.rrdname}:ram:AVERAGE",
-       "DEF:swap=#{@@rrd.rrdname}:swap:AVERAGE",
-       "CDEF:bram=#{@@config['mem_ramtotal']},ram,-",
-       "CDEF:bswap=#{@@config['mem_swaptotal']},swap,-",
-       "AREA:bram#99ffff:used RAM\\: ",
-       "VDEF:bramlast=bram,LAST", "VDEF:ramlast=ram,LAST",
-       "VDEF:bswaplast=bswap,LAST", "VDEF:swaplast=swap,LAST",
-       "GPRINT:bramlast:%4.3lf %sB",
-       "LINE1:ram#ff0000:free RAM\\: ",
-       "GPRINT:ramlast:%4.3lf %sB\\n",
-       "LINE1:bswap#000000:used SWAP\\: ",
-       "GPRINT:bswaplast:%4.3lf %sB ",
-       "LINE1:swap#006600:free SWAP\\: ",
-       "GPRINT:swaplast:%4.3lf %sB"])
+       "--base", "1024",
+       "DEF:framk=#{@@rrd.rrdname}:ram:AVERAGE",
+       "DEF:fswapk=#{@@rrd.rrdname}:swap:AVERAGE",
+       "CDEF:uramk=#{@@config['mem_ramtotal']},framk,-",
+       "CDEF:uswapk=#{@@config['mem_swaptotal']},fswapk,-",
+       "CDEF:fram=framk,1024,*", "CDEF:fswap=fswapk,1024,*",
+       "CDEF:uram=uramk,1024,*", "CDEF:uswap=uswapk,1024,*",
+       "VDEF:uramlast=uram,LAST", "VDEF:framlast=fram,LAST",
+       "VDEF:uswaplast=uswap,LAST", "VDEF:fswaplast=fswap,LAST",
+       "AREA:uswap#ff0000:used SWAP\\:",
+       "GPRINT:uswaplast: %4.3lf %sB",
+       "LINE1:fswap#000000:\tfree SWAP\\:",
+       "GPRINT:fswaplast: %4.3lf %sB"])
+       "AREA:uram#0000ff:used RAM\\:",
+       "GPRINT:uramlast:  %4.3lf %sB",
+       "AREA:fram#55dd55:\tfree RAM\\::STACK",
+       "GPRINT:framlast:  %4.3lf %sB\\n",
   end
 end
 

@@ -1,3 +1,10 @@
+Version 2.16 - 2007-05-07
+    - Fixed memory graph
+    - Fixed disk graphs (32bit integer overflows)
+    - Removed unnecessary system calls from disk statistics
+    - Fixed graph creations of cpu, load, processes
+    - install.sh removed -s flag from hostname command
+
 Version 2.15 - 2007-05-06
     - Added README
 

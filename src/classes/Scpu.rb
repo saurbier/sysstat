@@ -57,6 +57,8 @@ class Scpu
     @@data['system'] = 0
     @@data['user'] = 0
 
+    sleep 5
+
     if(@@config['os'] == "freebsd6")
       @output = %x[vmstat -p proc]
       @output.each do |line|
@@ -108,6 +110,7 @@ class Scpu
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
+       "--units-exponent", "0",
        "COMMENT:\t   Current\t   Average\t    Maximum\\n",
        "DEF:usr=#{@@rrd.rrdname}:usr:AVERAGE",
        "DEF:sys=#{@@rrd.rrdname}:sys:AVERAGE",
