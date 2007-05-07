@@ -116,11 +116,11 @@ class Smemory
        "AREA:uswap#ff0000:used SWAP\\:",
        "GPRINT:uswaplast: %4.3lf %sB",
        "LINE1:fswap#000000:\tfree SWAP\\:",
-       "GPRINT:fswaplast: %4.3lf %sB"])
+       "GPRINT:fswaplast: %4.3lf %sB",
        "AREA:uram#0000ff:used RAM\\:",
        "GPRINT:uramlast:  %4.3lf %sB",
        "AREA:fram#55dd55:\tfree RAM\\::STACK",
-       "GPRINT:framlast:  %4.3lf %sB\\n",
+       "GPRINT:framlast:  %4.3lf %sB\\n"])
   end
 end
 

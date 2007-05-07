@@ -106,7 +106,7 @@ class Sdisk
          "--base", "1024",
          "DEF:sizek=#{@@rrd[hdd].rrdname}:size:AVERAGE",
          "DEF:usedk=#{@@rrd[hdd].rrdname}:used:AVERAGE",
-         "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*"
+         "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*",
          "CDEF:free=size,used,-",
          "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",
          "AREA:used#0000ff:usage",
