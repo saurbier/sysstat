@@ -12,9 +12,18 @@ Runtime:
     - RRDTool >= 1.2.0
     - ruby-gems
     - RubyRRDTool (via rubygems)
-    
 
-2. Installation
+
+2. Preparations
+2.1 FreeBSD
+# cd /usr/ports/net/rubygem-rrdtool/ && make install distclean
+
+2.2 Debian
+# apt-get install ruby1.8 ruby1.8-dev librrd2 librrd2-dev
+# gem install RubyRRDtool -b
+
+
+3. Installation
 Use the install.sh script for installation. For further help
 read the builtin help:
 
