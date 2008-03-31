@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "INSTALLDIR/etc/sysstat.conf"
-$SVERSION = "2.16"
+$SVERSION = "2.17"
 
 # Add lib directories to include path
 $: << "INSTALLDIR/lib"
@@ -58,6 +58,7 @@ options.each_option do |name, arg|
       puts "Options:"
       puts "  -c FILE  --config-file FILE    Use config file FILE"
       puts "  -h  --help                     Output this help, then exit"
+      puts "  -p  --pid-file                 User FILE for pid file"
       puts "  -v  --version                  Output version number, then exit"
       Kernel.exit!
 
@@ -68,7 +69,7 @@ options.each_option do |name, arg|
     when("--version")
       # Display Version
       puts "Sysstat #{$SVERSION}"
-      puts "  (c)2006,2007 Konstantin Saurbier"
+      puts "  (c)2006-2008 Konstantin Saurbier"
       Kernel.exit!
   end
 end

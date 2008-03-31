@@ -1,3 +1,12 @@
+Version 2.17 - 2008-
+    - Added error graph for network interfaces (CHECK)
+    - Added postfix mailqueue statistics (CHECK)
+    - Changed configuration to YAML (TODO: config generation)
+    - Changed class variables to instance variables
+    - changed puffer objects to local variables (were: instance variables)
+    - Increased line thickness
+    - Fixed module template (TODO!)
+
 Version 2.16 - 2007-05-07
     - Fixed memory graph
     - Fixed disk graphs (32bit integer overflows)

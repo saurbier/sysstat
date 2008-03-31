@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,26 +28,26 @@
 
 
 class Sdisk
-  @@config = 0
-  @@data = Hash.new 
-  @@rrd = Hash.new
+  @config = 0
+  @data = Hash.new 
+  @rrd = Hash.new
 
   def initialize(config)
-    @@config = config
-    @@config['hdds'].split().each do |hdd|
-      @@rrd[hdd] = RRDtool.new("#{@@config['dbdir']}/#{@@config['hdds_prefix']}-#{hdd}.rrd")
-      @@data[hdd] = Hash.new
-      @@data[hdd]['size'] = 0
-      @@data[hdd]['used'] = 0
+    @config = config
+    @config['Sdisk']['devices'].each do |hdd|
+      @rrd[hdd] = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Sdisk']['prefix']}-#{hdd}.rrd")
+      @data[hdd] = Hash.new
+      @data[hdd]['size'] = 0
+      @data[hdd]['used'] = 0
     end
   end
 
   def mkdb
-    @@config['hdds'].split().each do |hdd|
-      if(!FileTest.exist?(@@rrd[hdd].rrdname))
-        @@rrd[hdd].create(@@config['step'], Time.now.to_i-1,
-          ["DS:size:GAUGE:#{@@config['step']+60}:0:U",
-           "DS:used:GAUGE:#{@@config['step']+60}:0:U",
+    @config['Sdisk']['devices'].each do |hdd|
+      if(!FileTest.exist?(@rrd[hdd].rrdname))
+        @rrd[hdd].create(@config['Smain']['step'], Time.now.to_i-1,
+          ["DS:size:GAUGE:#{@config['Smain']['step']+60}:0:U",
+           "DS:used:GAUGE:#{@config['Smain']['step']+60}:0:U",
            "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
            "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
            "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
@@ -57,22 +57,22 @@ class Sdisk
   end
 
   def get
-    @@config['hdds'].split().each do |hdd|      
-      @output = %x[df -m]
-      @output.each do |line|
+    @config['Sdisk']['devices'].each do |hdd|      
+      output = %x[df -m]
+      output.each do |line|
         regex = Regexp.new("^/dev/#{hdd}")
         if(line =~ regex)
-          @@data[hdd]['size'] = line.split()[1]
-          @@data[hdd]['used'] = line.split()[2]
+          @data[hdd]['size'] = line.split()[1]
+          @data[hdd]['used'] = line.split()[2]
         end
       end
     end
   end
 
   def write
-    @@config['hdds'].split().each do |hdd|
-      @@rrd[hdd].update("size:used",
-        ["N:#{@@data[hdd]['size']}:#{@@data[hdd]['used']}"])
+    @config['Sdisk']['devices'].each do |hdd|
+      @rrd[hdd].update("size:used",
+        ["N:#{@data[hdd]['size']}:#{@data[hdd]['used']}"])
     end
   end
 
@@ -91,9 +91,9 @@ class Sdisk
       @suffix = "year"
     end
 
-    @@config['hdds'].split().each do |hdd|
+    @config['Sdisk']['devices'].each do |hdd|
       RRDtool.graph(
-        ["#{@@config['graphdir']}/#{@@config['hdds_prefix']}-#{hdd}-#{@suffix}.png",
+        ["#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png",
          "--title", "Usage statistics for /dev/#{hdd}",
          "--start", "#{@start}", 
          "--interlace",
@@ -104,8 +104,8 @@ class Sdisk
          "--color", "SHADEB#ffffff",
          "--color", "BACK#ffffff",
          "--base", "1024",
-         "DEF:sizek=#{@@rrd[hdd].rrdname}:size:AVERAGE",
-         "DEF:usedk=#{@@rrd[hdd].rrdname}:used:AVERAGE",
+         "DEF:sizek=#{@rrd[hdd].rrdname}:size:AVERAGE",
+         "DEF:usedk=#{@rrd[hdd].rrdname}:used:AVERAGE",
          "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*",
          "CDEF:free=size,used,-",
          "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,19 +28,19 @@
 
 
 class Sprocesses
-  @@config = 0
-  @@data = Hash.new 
+  @config = 0
+  @data = Hash.new 
 
   def initialize(config)
-    @@config = config
-    @@data['processes'] = 0
-    @@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['_prefix']}.rrd")    
+    @config = config
+    @data['processes'] = 0
+    @rrd = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Sprocesses']['prefix']}.rrd")    
   end
 
   def mkdb
-    if(!FileTest.exist?(@@rrd.rrdname))
-      @@rrd.create(@@config['step'], Time.now.to_i-1,
-        ["DS:processes:GAUGE:#{@@config['step']+60}:0:U",
+    if(!FileTest.exist?(@rrd.rrdname))
+      @rrd.create(@config['Smain']['step'], Time.now.to_i-1,
+        ["DS:processes:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
          "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
          "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
@@ -49,16 +49,16 @@ class Sprocesses
   end
 
   def get
-    @@data['processes'] = 0
+    @data['processes'] = 0
 
-    @output = %x[ps hax]
-    @output.each do |line|
-      @@data['processes'] += 1
+    output = %x[ps hax]
+    output.each do |line|
+      @data['processes'] += 1
     end
   end
 
   def write
-    @@rrd.update("processes", ["N:#{@@data['processes']}"])
+    @rrd.update("processes", ["N:#{@data['processes']}"])
   end
 
   def graph(timeframe)
@@ -79,7 +79,7 @@ class Sprocesses
     end
 
     RRDtool.graph(
-      ["#{@@config['graphdir']}/#{@@config['processes_prefix']}-#{@suffix}.png",
+      ["#{@config['Smain']['graphdir']}/#{@config['Sprocesses']['prefix']}-#{@suffix}.png",
        "--title", "Number of processes",
        "--start", "#{@start}", 
        "--interlace",
@@ -90,11 +90,11 @@ class Sprocesses
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
        "--units-exponent", "0",
-       "DEF:processes=#{@@rrd.rrdname}:processes:AVERAGE",
-       "LINE1:processes#ff0000:Process count",
+       "DEF:processes=#{@rrd.rrdname}:processes:AVERAGE",
+       "LINE2:processes#ff0000:Process count",
        "VDEF:auswertung1=processes,AVERAGE",
        "GPRINT:auswertung1:Average process count\\: %lg",
-       "DEF:maxaus=#{@@rrd.rrdname}:processes:MAX",
+       "DEF:maxaus=#{@rrd.rrdname}:processes:MAX",
        "VDEF:maxaus1=maxaus,MAXIMUM",
        "GPRINT:maxaus1:Maximum process count\\: %lg"])
   end

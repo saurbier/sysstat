@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,23 +28,23 @@
 
 
 class Sload
-  @@config = 0
-  @@data = Hash.new 
+  @config = 0
+  @data = Hash.new 
 
   def initialize(config)
-    @@config = config
-    @@data['1min'] = 0
-    @@data['5min'] = 0
-    @@data['15min'] = 0
-    @@rrd = RRDtool.new("#{@@config['dbdir']}/#{@@config['load_prefix']}.rrd")
+    @config = config
+    @data['1min'] = 0
+    @data['5min'] = 0
+    @data['15min'] = 0
+    @rrd = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Sload']['prefix']}.rrd")
   end
 
   def mkdb
-    if(!FileTest.exist?(@@rrd.rrdname))
-      @@rrd.create(@@config['step'], Time.now.to_i-1,
-        ["DS:load1:GAUGE:#{@@config['step']+60}:0:U",
-         "DS:load5:GAUGE:#{@@config['step']+60}:0:U",
-         "DS:load15:GAUGE:#{@@config['step']+60}:0:U",
+    if(!FileTest.exist?(@rrd.rrdname))
+      @rrd.create(@config['Smain']['step'], Time.now.to_i-1,
+        ["DS:load1:GAUGE:#{@config['Smain']['step']+60}:0:U",
+         "DS:load5:GAUGE:#{@config['Smain']['step']+60}:0:U",
+         "DS:load15:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
          "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
          "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
@@ -53,30 +53,30 @@ class Sload
   end
 
   def get
-    if(@@config['os'] == "freebsd6")
-      @output = %x[LANG="en_US.8859-15" sysctl vm.loadavg]
-      @output.each do |line|
+    if(@config['os'] == "freebsd6")
+      output = %x[LANG="en_US.8859-15" sysctl vm.loadavg]
+      output.each do |line|
         linea = line.split
-        @@data['1min'] = linea[2]
-        @@data['5min'] = linea[3]
-        @@data['15min'] = linea[4]
+        @data['1min'] = linea[2]
+        @data['5min'] = linea[3]
+        @data['15min'] = linea[4]
       end
 
-    elsif(@@config['os'] == "linux2.6")
-      @output = File.new("/proc/loadavg", "r")
-      @output.each_line do |line|
+    elsif(@config['os'] == "linux2.6")
+      output = File.new("/proc/loadavg", "r")
+      output.each_line do |line|
         linea = line.split
-        @@data['1min'] = linea[0]
-        @@data['5min'] = linea[1]
-        @@data['15min'] = linea[2]
+        @data['1min'] = linea[0]
+        @data['5min'] = linea[1]
+        @data['15min'] = linea[2]
       end
-      @output.close
+      output.close
     end
   end
 
   def write
-    @@rrd.update("load1:load5:load15",
-      ["N:#{@@data['1min']}:#{@@data['5min']}:#{@@data['15min']}"])
+    @rrd.update("load1:load5:load15",
+      ["N:#{@data['1min']}:#{@data['5min']}:#{@data['15min']}"])
   end
 
   def graph(timeframe)
@@ -97,7 +97,7 @@ class Sload
     end
 
     RRDtool.graph(
-      ["#{@@config['graphdir']}/#{@@config['load_prefix']}-#{@suffix}.png",
+      ["#{@config['Smain']['graphdir']}/#{@config['Sload']['prefix']}-#{@suffix}.png",
        "--title", "Load Average",
        "--start", "#{@start}", 
        "--interlace",
@@ -109,9 +109,9 @@ class Sload
        "--color", "BACK#ffffff",
        "--units-exponent", "0",
        "COMMENT:\t\t\t   Current\t     Average\t  Maximum\\n",
-       "DEF:load1=#{@@rrd.rrdname}:load1:AVERAGE",
-       "DEF:load5=#{@@rrd.rrdname}:load5:AVERAGE",
-       "DEF:load15=#{@@rrd.rrdname}:load15:AVERAGE",
+       "DEF:load1=#{@rrd.rrdname}:load1:AVERAGE",
+       "DEF:load5=#{@rrd.rrdname}:load5:AVERAGE",
+       "DEF:load15=#{@rrd.rrdname}:load15:AVERAGE",
        "AREA:load1#ff0000:1 minute  ", "LINE1:load1#ff0000:",
        "VDEF:load1l=load1,LAST", "GPRINT:load1l:%12.2lf",
        "VDEF:load1avg=load1,AVERAGE", "GPRINT:load1avg:%12.2lf",

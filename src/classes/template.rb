@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2008 Author
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,30 +27,30 @@
 # SUCH DAMAGE.
 
 
-class connections
-	@@config = 0
-	@@data = Hash.new 
+class ModuleName
+	@config = 0
+	@data = Hash.new 
 
 	def initialize(config)
-		@@config = config
-		@@data['value'] = 0
+		@config = config
+		@data['value'] = 0
 	end
 
 	def mkdb
-		%x[#{@@config['rrdtool']} create \
-			#{@@config['dbdir']}/@@config['load_prefix']}.rrd \
-			--step #{@@config['step']} \
+		%x[#{@config['rrdtool']} create \
+			#{@config['dbdir']}/@config['load_prefix']}.rrd \
+			--step #{@config['step']} \
 		]
 	end
 
 	def get
-		if(@@config['os'] == "freebsd6")
-			@output = %x[#{@@config['src_program']}]
+		if(@config['os'] == "freebsd6")
+			@output = %x[#{@config['src_program']}]
 			@output.each do |line|
 				# do something...
 			end
-		elsif(@@config['os'] == "linux2.6")
-			@output = %x[#{@@config['src_program']}]
+		elsif(@config['os'] == "linux2.6")
+			@output = %x[#{@config['src_program']}]
 			@output.each do |line|
 				# do something...
 			end
@@ -58,7 +58,7 @@ class connections
 	end
 
 	def write
-		%x[#{@@config['rrdtool']} update #{@@config['dbdir']}/@@config['_prefix']} N:#{@@data['value']}]
+		%x[#{@config['rrdtool']} update #{@config['dbdir']}/@config['_prefix']} N:#{@data['value']}]
 	end
 
 	def graph(timeframe)
@@ -78,8 +78,8 @@ class connections
 			@suffix = "year"
 		end
 
-		%[#{@@config['rrdtool']} graph \
-			#{@@config['graphdir']}/#{@@config['_prefix']}-#{@suffix}.rrd -i \
+		%[#{@config['rrdtool']} graph \
+			#{@config['graphdir']}/#{@config['_prefix']}-#{@suffix}.rrd -i \
 			--start #{@start} -a PNG -t "" \
 			--vertical-label "" -w 600 -h 150 \
 			--color SHADEA#ffffff --color SHADEB#ffffff \
