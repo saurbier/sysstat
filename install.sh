@@ -48,8 +48,6 @@ while getopts hI:O:P:s:S: ARGS; do
             echo "          (Default: /usr/local/sysstat)"
             echo " -O <path>    Where to write the statistics"
             echo "          (Default: $PREFIX/output)"
-            echo " -s       Time in seconds between data gatherings."
-            echo " -S       Time in seconds between graph creations."
             exit
             ;;
         I)
@@ -58,11 +56,6 @@ while getopts hI:O:P:s:S: ARGS; do
         O)
             GRAPHDIR="$OPTARG"
             ;;
-        s)  
-            STEP=$(($(($OPTARG / 60)) * 60))
-            ;;
-        S)
-            GINTERVAL=$(($(($OPTARG / 300)) * 300))
     esac
 done
 
@@ -90,22 +83,23 @@ HDDS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | 
 # Get network interfaces
 INTERFACES=$(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
         tr ":" " " | tr "\n" " " | sed 's: $::')
+for i in $INTERFACES; do
+	INTCONF="+="  - ${i}\n"
+done
 
 # Create temporary files and directories
 mkdir -p tmp
 
 # Create configuration file
-cat src/conf/sysstat.conf | \
+cat src/conf/sysstat.yml | \
     sed "s:OS:$OS:" | \
     sed "s:INSTALLDIR:$PREFIX:" | \
     sed "s:GRAPHDIR:$GRAPHDIR:" | \
     sed "s:DBDIR:$DBDIR:" | \
-    sed "s:STEP:$STEP:" | \
-    sed "s:GINTERVAL:$GINTERVAL:" | \
-    sed "s:INTERFACES:$INTERFACES:" | \
+    sed "s:INTERFACES:$INTCONF:" | \
     sed "s:HDDS:$HDDS:" | \
     sed "s:RAM:$RAM:" | \
-    sed "s:SWAP:$SWAP:" > tmp/sysstat.conf
+    sed "s:SWAP:$SWAP:" > tmp/sysstat.yml
 
 # Create daemon
 sed "s:INSTALLDIR:$PREFIX:" src/bin/sysstat.rb > tmp/sysstat.rb
@@ -187,7 +181,11 @@ rm -rf tmp/
 cat <<EOF
 
 The Sysstat scripts are now installed.
-Please start the daemon with the supplied RC/Init script at:
+Please check and adjust the configuration. It was installed at:
+
+    $(echo $PREFIX/etc/sysstat.yml)
+
+To start the daemon, use the supplied RC/Init script at:
 
     $(echo $PREFIX/bin/sysstat.sh)
 

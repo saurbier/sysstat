@@ -137,10 +137,7 @@ f.each do |line|
 end
 f.close
 
-#FileUtils.move(@configfile,@configfile+".orig")
-
-#file = File.new(@configfile+".new", "w+")
-file = File.new(@configfile, "w+")
+file = File.new(@configfile.gsub(/conf/,"yml"), "w+")
 file.write(YAML::dump(@config))
 file.close
 

@@ -113,13 +113,13 @@ class Smemory
        "CDEF:uram=uramk,1024,*", "CDEF:uswap=uswapk,1024,*",
        "VDEF:uramlast=uram,LAST", "VDEF:framlast=fram,LAST",
        "VDEF:uswaplast=uswap,LAST", "VDEF:fswaplast=fswap,LAST",
-       "AREA:uswap#ff0000:used SWAP\\:",
+       "LINE2:uswap#ff0000:used SWAP\\:",
        "GPRINT:uswaplast: %4.3lf %sB",
-       "LINE2:fswap#000000:\tfree SWAP\\:",
+       "LINE2:fswap#0000ff:\tfree SWAP\\:",
        "GPRINT:fswaplast: %4.3lf %sB\\n",
-       "AREA:uram#0000ff:used RAM\\:",
+       "LINE2:uram##ff9900:used RAM\\:",
        "GPRINT:uramlast:  %4.3lf %sB",
-       "AREA:fram#55dd55:\tfree RAM\\::STACK",
+       "LINE2:fram#55dd55:\tfree RAM\\:",
        "GPRINT:framlast:  %4.3lf %sB"])
   end
 end
