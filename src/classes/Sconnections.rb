@@ -28,33 +28,36 @@
 
 
 class Sconnections
-  @config = 0
-  @data = Hash.new 
-
   def initialize(config)
     @config = config
+
+    @data = Hash.new
     @data['udp'] = 0
     @data['tcp'] = 0
-    @rrd = RRDtool.new("#{@config["Smain"]['dbdir']}/#{@config['Sconnections']['prefix']}.rrd")
+
+    @rrdname = "#{@config['Smain']['dbdir']}/#{@config['Sconnections']['prefix']}.rrd"
   end
 
   def mkdb
-    if(!FileTest.exist?(@rrd.rrdname))
-      @rrd.create(@config["Smain"]['step'], Time.now.to_i-1,
-        ["DS:tcp:GAUGE:#{@config["Smain"]['step']+60}:0:U",
-         "DS:udp:GAUGE:#{@config["Smain"]['step']+60}:0:U",
-         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+    if(!FileTest.exist?(@rrdname))
+      RRD.create(
+          @rrdname,
+          "--step", "#{@config['Smain']['step']}",
+          "--start", "#{Time.now.to_i-1}",
+          "DS:tcp:GAUGE:#{@config['Smain']['step']+60}:0:U",
+          "DS:udp:GAUGE:#{@config['Smain']['step']+60}:0:U",
+          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+          "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+          "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+          "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760")
     end
   end
 
   def get
-    @data['tcp'] = 0
     @data['udp'] = 0
-
-    if(@config['os'] == "freebsd6" || @config['os'] == "linux2.6")
+    @data['tcp'] = 0
+    
+    if(@config['Smain']['os'] == "freebsd6" || @config['Smain']['os'] == "linux2.6")
       output = %x[netstat -n]
       output.each do |line|
         if(line =~ /tcp/)
@@ -67,7 +70,7 @@ class Sconnections
   end
 
   def write
-    @rrd.update("tcp:udp", ["N:#{@data['tcp']}:#{@data['udp']}"])
+    RRD.update(@rrdname, "N:#{@data['tcp']}:#{@data['udp']}")
   end
 
   def graph(timeframe)
@@ -87,8 +90,8 @@ class Sconnections
       @suffix = "year"
     end
 
-    RRDtool.graph(
-      ["#{@config["Smain"]['graphdir']}/#{@config['Sconnections']['prefix']}-#{@suffix}.png",
+    RRD.graph(
+       "#{@config['Smain']['graphdir']}/#{@config['Sconnections']['prefix']}-#{@suffix}.png",
        "--title", "Network connections",
        "--start", "#{@start}", 
        "--interlace",
@@ -98,17 +101,20 @@ class Sconnections
        "--color", "SHADEA#ffffff",
        "--color", "SHADEB#ffffff",
        "--color", "BACK#ffffff",
-       "COMMENT:\t\t   Current\t\t  Average\t\t Maximum\\n",
-       "DEF:tcp=#{@rrd.rrdname}:tcp:AVERAGE",
-       "LINE2:tcp#ff0000:TCP ",
-       "VDEF:tcplast=tcp,LAST", "GPRINT:tcplast: %12.3lf ",
-       "VDEF:tcpavg=tcp,AVERAGE", "GPRINT:tcpavg: %12.3lf ",
-       "VDEF:tcpmax=tcp,MAXIMUM", "GPRINT:tcpmax: %12.3lf\\n",
-       "DEF:udp=#{@rrd.rrdname}:udp:AVERAGE",
-       "LINE2:udp#0000ff:UDP ",
-       "VDEF:udplast=udp,LAST", "GPRINT:udplast: %12.3lf ",
-       "VDEF:udpavg=udp,AVERAGE", "GPRINT:udpavg: %12.3lf ",
-       "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax: %12.3lf"])
+       "DEF:tcp=#{@rrdname}:tcp:AVERAGE",
+       "CDEF:Ln1=tcp,tcp,UNKN,IF",
+       "AREA:tcp#EA644A:TCP",
+       "LINE1:Ln1#CC3118",
+       "VDEF:tcplast=tcp,LAST", "GPRINT:tcplast: cur\\: %5.0lf ",
+       "VDEF:tcpavg=tcp,AVERAGE", "GPRINT:tcpavg: avg\\: %5.0lf ",
+       "VDEF:tcpmax=tcp,MAXIMUM", "GPRINT:tcpmax: max\\: %5.0lf\\n",
+       "DEF:udp=#{@rrdname}:udp:AVERAGE",
+       "CDEF:Ln2=udp,tcp,udp,+,UNKN,IF",
+       "AREA:udp#EC9D48:UDP:STACK",
+       "LINE1:Ln2#CC7016",
+       "VDEF:udplast=udp,LAST", "GPRINT:udplast: cur\\: %5.0lf ",
+       "VDEF:udpavg=udp,AVERAGE", "GPRINT:udpavg: avg\\: %5.0lf ",
+       "VDEF:udpmax=udp,MAXIMUM", "GPRINT:udpmax: max\\: %5.0lf\\n")
   end
 end
 

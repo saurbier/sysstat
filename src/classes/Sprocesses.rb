@@ -28,23 +28,26 @@
 
 
 class Sprocesses
-  @config = 0
-  @data = Hash.new 
-
   def initialize(config)
     @config = config
+
+    @data = Hash.new
     @data['processes'] = 0
-    @rrd = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Sprocesses']['prefix']}.rrd")    
+
+    @rrdname = "#{@config['Smain']['dbdir']}/#{@config['Sprocesses']['prefix']}.rrd"
   end
 
   def mkdb
-    if(!FileTest.exist?(@rrd.rrdname))
-      @rrd.create(@config['Smain']['step'], Time.now.to_i-1,
-        ["DS:processes:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+    if(!FileTest.exist?(@rrdname))
+      RRD.create(
+        @rrdname,
+        "--step", "#{@config['Smain']['step']}",
+        "--start", "#{Time.now.to_i-1}",
+        "DS:processes:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+        "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+        "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+        "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760")
     end
   end
 
@@ -58,7 +61,7 @@ class Sprocesses
   end
 
   def write
-    @rrd.update("processes", ["N:#{@data['processes']}"])
+    RRD.update(@rrdname, "N:#{@data['processes']}")
   end
 
   def graph(timeframe)
@@ -78,25 +81,26 @@ class Sprocesses
       @suffix = "year"
     end
 
-    RRDtool.graph(
-      ["#{@config['Smain']['graphdir']}/#{@config['Sprocesses']['prefix']}-#{@suffix}.png",
-       "--title", "Number of processes",
-       "--start", "#{@start}", 
-       "--interlace",
-       "--imgformat", "PNG",
-       "--width=600", "--height=150",
-       "--vertical-label", "processes",
-       "--color", "SHADEA#ffffff",
-       "--color", "SHADEB#ffffff",
-       "--color", "BACK#ffffff",
-       "--units-exponent", "0",
-       "DEF:processes=#{@rrd.rrdname}:processes:AVERAGE",
-       "LINE2:processes#ff0000:Process count",
-       "VDEF:auswertung1=processes,AVERAGE",
-       "GPRINT:auswertung1:Average process count\\: %lg",
-       "DEF:maxaus=#{@rrd.rrdname}:processes:MAX",
-       "VDEF:maxaus1=maxaus,MAXIMUM",
-       "GPRINT:maxaus1:Maximum process count\\: %lg"])
+    RRD.graph(
+      "#{@config['Smain']['graphdir']}/#{@config['Sprocesses']['prefix']}-#{@suffix}.png",
+      "--title", "Number of processes",
+      "--start", "#{@start}", 
+      "--interlace",
+      "--imgformat", "PNG",
+      "--width=600", "--height=150",
+      "--vertical-label", "processes",
+      "--color", "SHADEA#ffffff",
+      "--color", "SHADEB#ffffff",
+      "--color", "BACK#ffffff",
+      "--units-exponent", "0",
+      "DEF:processes=#{@rrdname}:processes:AVERAGE",
+      "AREA:processes#EA644A:Process count",
+      "LINE1:processes#CC3118",
+      "VDEF:auswertung1=processes,AVERAGE",
+      "GPRINT:auswertung1:average\\: %lg",
+      "DEF:maxaus=#{@rrdname}:processes:MAX",
+      "VDEF:maxaus1=maxaus,MAXIMUM",
+      "GPRINT:maxaus1:maximum\\: %lg\\n")
   end
 end
 

@@ -27,16 +27,16 @@
 
 
 class Smain
-  @childs = Hash.new
-  @modules = Hash.new
-  @config = Hash.new
-  
   def initialize(config)
+    @childs = Hash.new
+    @modules = Hash.new
+    @config = Hash.new
+
     # Read configuration file and set values in @config hash
     @config = YAML.load(File.open(config))
     
     # Initialize modules
-    @config["Smain"]['modules'].split().each do |modul|
+    @config["Smain"]['modules'].each do |modul|
       # Load modules and initialize them
       require "#{modul}.rb"
       @modules[modul] = Object.const_get(modul).new("Smain" => @config["Smain"], modul => @config[modul])

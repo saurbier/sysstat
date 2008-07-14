@@ -28,19 +28,22 @@
 
 
 class Smemory
-  @config = 0
-  @data = Hash.new 
-
   def initialize(config)
     @config = config
+
+    @data = Hash.new
     @data['fram'] = 0
     @data['fswap'] = 0
-    @rrd = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Smemory']['prefix']}.rrd")
+    
+    @rrdname = "#{@config['Smain']['dbdir']}/#{@config['Smemory']['prefix']}.rrd"
   end
 
   def mkdb
-    if(!FileTest.exist?(@rrd.rrdname))
-      @rrd.create(@config['Smain']['step'], Time.now.to_i-1,
+    if(!FileTest.exist?(@rrdname))
+      RRD.create(
+        @rrdname,
+        "--step", "#{@config['Smain']['step']}",
+        "--start", "#{Time.now.to_i-1}",
         ["DS:ram:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
@@ -49,7 +52,7 @@ class Smemory
   end
 
   def get
-    if(@config['os'] == "freebsd6")
+    if(@config['Smain']['os'] == "freebsd6")
       output = %x[vmstat]
       output.each do |line|
         @data['fram'] = line.split()[4].to_i
@@ -59,7 +62,7 @@ class Smemory
       output.each do |line|
         @data['fswap'] = line.split()[3].to_i
       end
-    elsif(@config['os'] == "linux2.6")
+    elsif(@config['Smain']['os'] == "linux2.6")
       output = File.new("/proc/meminfo", "r") 
       output.each do |line|
         if(line =~ /MemFree:/)
@@ -73,7 +76,7 @@ class Smemory
   end
 
   def write
-    @rrd.update("ram:swap", ["N:#{@data['fram']}:#{@data['fswap']}"])
+    RRD.update(@rrdname, "N:#{@data['fram']}:#{@data['fswap']}")
   end
 
   def graph(timeframe)
@@ -93,34 +96,34 @@ class Smemory
       @suffix = "year"
     end
 
-    RRDtool.graph(
-      ["#{@config['Smain']['graphdir']}/#{@config['Smemory']['prefix']}-#{@suffix}.png",
-       "--title", "RAM and Swap usage",
-       "--start", "#{@start}", 
-       "--interlace",
-       "--imgformat", "PNG",
-       "--width=600", "--height=150",
-       "--vertical-label", "Bytes",
-       "--color", "SHADEA#ffffff",
-       "--color", "SHADEB#ffffff",
-       "--color", "BACK#ffffff",
-       "--base", "1024",
-       "DEF:framk=#{@rrd.rrdname}:ram:AVERAGE",
-       "DEF:fswapk=#{@rrd.rrdname}:swap:AVERAGE",
-       "CDEF:uramk=#{@config['mem_ramtotal']},framk,-",
-       "CDEF:uswapk=#{@config['mem_swaptotal']},fswapk,-",
-       "CDEF:fram=framk,1024,*", "CDEF:fswap=fswapk,1024,*",
-       "CDEF:uram=uramk,1024,*", "CDEF:uswap=uswapk,1024,*",
-       "VDEF:uramlast=uram,LAST", "VDEF:framlast=fram,LAST",
-       "VDEF:uswaplast=uswap,LAST", "VDEF:fswaplast=fswap,LAST",
-       "LINE2:uswap#ff0000:used SWAP\\:",
-       "GPRINT:uswaplast: %4.3lf %sB",
-       "LINE2:fswap#0000ff:\tfree SWAP\\:",
-       "GPRINT:fswaplast: %4.3lf %sB\\n",
-       "LINE2:uram##ff9900:used RAM\\:",
-       "GPRINT:uramlast:  %4.3lf %sB",
-       "LINE2:fram#55dd55:\tfree RAM\\:",
-       "GPRINT:framlast:  %4.3lf %sB"])
+    RRD.graph(
+      "#{@config['Smain']['graphdir']}/#{@config['Smemory']['prefix']}-#{@suffix}.png",
+      "--title", "RAM and Swap usage",
+      "--start", "#{@start}", 
+      "--interlace",
+      "--imgformat", "PNG",
+      "--width=600", "--height=150",
+      "--vertical-label", "Bytes",
+      "--color", "SHADEA#ffffff",
+      "--color", "SHADEB#ffffff",
+      "--color", "BACK#ffffff",
+      "--base", "1024",
+      "DEF:framk=#{@rrdname}:ram:AVERAGE",
+      "DEF:fswapk=#{@rrdname}:swap:AVERAGE",
+      "CDEF:uramk=#{@config['Smemory']['ramtotal']},framk,-",
+      "CDEF:uswapk=#{@config['Smemory']['swaptotal']},fswapk,-",
+      "CDEF:fram=framk,1024,*", "CDEF:fswap=fswapk,1024,*",
+      "CDEF:uram=uramk,1024,*", "CDEF:uswap=uswapk,1024,*",
+      "VDEF:uramlast=uram,LAST", "VDEF:framlast=fram,LAST",
+      "VDEF:uswaplast=uswap,LAST", "VDEF:fswaplast=fswap,LAST",
+      "LINE2:uswap#ff0000:used SWAP\\:",
+      "GPRINT:uswaplast: %4.3lf %sB",
+      "LINE2:fswap#0000ff:\tfree SWAP\\:",
+      "GPRINT:fswaplast: %4.3lf %sB\\n",
+      "LINE2:uram#ff9900:used RAM\\:",
+      "GPRINT:uramlast:  %4.3lf %sB",
+      "LINE2:fram#55dd55:\tfree RAM\\:",
+      "GPRINT:framlast:  %4.3lf %sB\\n")
   end
 end
 

@@ -28,27 +28,29 @@
 
 
 class Scpu
-  @config = 0
-  @data = Hash.new 
-
   def initialize(config)
     @config = config
+
+    @data = Hash.new
     @data['idle'] = 0
     @data['system'] = 0
     @data['user'] = 0
-    @rrd = RRDtool.new("#{@config["Smain"]['dbdir']}/#{@config['Scpu']['prefix']}.rrd")
+
+    @rrdname = "#{@config["Smain"]['dbdir']}/#{@config['Scpu']['prefix']}.rrd"
   end
 
   def mkdb
-    if(!FileTest.exist?(@rrd.rrdname))
-      @rrd.create(@config["Smain"]['step'], Time.now.to_i-1,
-        ["DS:usr:GAUGE:#{@config["Smain"]['step']+60}:0:U",
-         "DS:sys:GAUGE:#{@config["Smain"]['step']+60}:0:U",
-         "DS:idl:GAUGE:#{@config["Smain"]['step']+60}:0:U",
-         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+    if(!FileTest.exist?(@rrdname))
+      RRD.create(@rrdname,
+        "--step", "#{@config["Smain"]['step']}",
+        "--start", "#{Time.now.to_i-1}",
+        "DS:usr:GAUGE:#{@config["Smain"]['step']+60}:0:U",
+        "DS:sys:GAUGE:#{@config["Smain"]['step']+60}:0:U",
+        "DS:idl:GAUGE:#{@config["Smain"]['step']+60}:0:U",
+        "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+        "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+        "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+        "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760")
     end
   end
 
@@ -59,15 +61,15 @@ class Scpu
 
     sleep 5
 
-    if(@config['os'] == "freebsd6")
-      output = %x[vmstat -p proc]
+    if(@config['Smain']['os'] == "freebsd6")
+      output = %x[vmstat -c 4 -w 1 -p proc]
       output.each do |line|
         linea = line.split
         @data['idle'] = linea[16]
         @data['system'] = linea[15]
         @data['user'] = linea[14]
       end
-    elsif(@config['os'] == "linux2.6")
+    elsif(@config['Smain']['os'] == "linux2.6")
       output = %x[vmstat]
       outpu.each do |line|
         linea = line.split
@@ -79,8 +81,7 @@ class Scpu
   end
 
   def write
-    @rrd.update("usr:sys:idl",
-      ["N:#{@data['user']}:#{@data['system']}:#{@data['idle']}"])
+    RRD.update(@rrdname, "N:#{@data['user']}:#{@data['system']}:#{@data['idle']}")
   end
 
   def graph(timeframe)
@@ -99,33 +100,35 @@ class Scpu
       @start = -31536000
       @suffix = "year"
     end
-    RRDtool.graph(
-      ["#{@config["Smain"]['graphdir']}/#{@config['Scpu']['prefix']}-#{@suffix}.png",
-       "--title", "CPU usage",
-       "--start", "#{@start}", 
-       "--interlace",
-       "--imgformat", "PNG",
-       "--width=600", "--height=150",
-       "--vertical-label", "Percent",
-       "--color", "SHADEA#ffffff",
-       "--color", "SHADEB#ffffff",
-       "--color", "BACK#ffffff",
-       "--units-exponent", "0",
-       "COMMENT:\t   Current\t   Average\t    Maximum\\n",
-       "DEF:usr=#{@rrd.rrdname}:usr:AVERAGE",
-       "DEF:sys=#{@rrd.rrdname}:sys:AVERAGE",
-       "DEF:idl=#{@rrd.rrdname}:idl:AVERAGE",
-       "LINE2:idl#00ff00:Idle   ",
-       "VDEF:idllast=idl,LAST", "GPRINT:idllast:%3.0lf%%",
-       "VDEF:idlavg=idl,AVERAGE" ,"GPRINT:idlavg:\t%3.0lf%%",
-       "VDEF:idlmax=idl,MAXIMUM", "GPRINT:idlmax:\t%3.0lf%%\\n",
-       "LINE2:sys#0000ff:System ",
-       "VDEF:syslast=sys,LAST", "GPRINT:syslast:%3.0lf%%",
-       "VDEF:sysavg=sys,AVERAGE", "GPRINT:sysavg:\t%3.0lf%%",
-       "VDEF:sysmax=sys,MAXIMUM", "GPRINT:sysmax:\t%3.0lf%%\\n",
-       "LINE2:usr#ff0000:User   ",
-       "VDEF:usrlast=usr,LAST", "GPRINT:usrlast:%3.0lf%%",
-       "VDEF:usravg=usr,AVERAGE", "GPRINT:usravg:\t%3.0lf%%",
-       "VDEF:usrmax=usr,MAXIMUM", "GPRINT:usrmax:\t%3.0lf%%"]) 
+    
+    RRD.graph(
+      "#{@config["Smain"]['graphdir']}/#{@config['Scpu']['prefix']}-#{@suffix}.png",
+      "--title", "CPU usage",
+      "--start", "#{@start}", 
+      "--interlace",
+      "--imgformat", "PNG",
+      "--width=600", "--height=150",
+      "--vertical-label", "Percent",
+      "--color", "SHADEA#ffffff",
+      "--color", "SHADEB#ffffff",
+      "--color", "BACK#ffffff",
+      "--units-exponent", "0",
+      "COMMENT:\t   Current\t   Average\t    Maximum\\n",
+      "DEF:usr=#{@rrdname}:usr:AVERAGE",
+      "DEF:sys=#{@rrdname}:sys:AVERAGE",
+      "DEF:idl=#{@rrdname}:idl:AVERAGE",
+      "CDEF:Ln1=usr,idl,sys,+,+", "CDEF:Ln2=usr,sys,+",
+      "LINE1:Ln1#24BC14:Idle   ",
+      "VDEF:idllast=idl,LAST", "GPRINT:idllast:%3.0lf%%",
+      "VDEF:idlavg=idl,AVERAGE" ,"GPRINT:idlavg:\t%3.0lf%%",
+      "VDEF:idlmax=idl,MAXIMUM", "GPRINT:idlmax:\t%3.0lf%%\\n",
+      "AREA:sys#EC9D48:System ", "LINE1:sys#CC7016",
+      "VDEF:syslast=sys,LAST", "GPRINT:syslast:%3.0lf%%",
+      "VDEF:sysavg=sys,AVERAGE", "GPRINT:sysavg:\t%3.0lf%%",
+      "VDEF:sysmax=sys,MAXIMUM", "GPRINT:sysmax:\t%3.0lf%%\\n",
+      "AREA:usr#ECD748:User   :STACK", "LINE1:Ln2#C9B215:",
+      "VDEF:usrlast=usr,LAST", "GPRINT:usrlast:%3.0lf%%",
+      "VDEF:usravg=usr,AVERAGE", "GPRINT:usravg:\t%3.0lf%%",
+      "VDEF:usrmax=usr,MAXIMUM", "GPRINT:usrmax:\t%3.0lf%%\\n") 
   end
 end

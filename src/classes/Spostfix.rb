@@ -28,25 +28,28 @@
 
 
 class Spostfix
-  @config = 0
-  @data = Hash.new 
-  @rrd = Hash.new
-
   def initialize(config)
     @config = config
-    @rrd['postfix_queue'] = RRDtool.new("#{@config['Smain']['dbdir']}/postfix-queue.rrd")
+    @data = Hash.new
+    @rrdname = Hash.new
+
     @data['active'] = 0
     @data['deferred'] = 0
     @data['incoming'] = 0
     @data['maildrop'] = 0
     @data['corrupt'] = 0
     @data['hold'] = 0
+    
+    @rrdname['postfix_queue'] = "#{@config['Smain']['dbdir']}/postfix-queue.rrd"
   end
 
   def mkdb
-    if(!FileTest.exist?(@rrd['postfix_queue'].rrdname))
-      @rrd['postfix_queue'].create(@config['Smain']['step'], Time.now.to_i-1,
-        ["DS:active:GAUGE:#{@config['Smain']['step']+60}:0:U",
+    if(!FileTest.exist?(@rrdname['postfix_queue']))
+      RRD.create(
+        @rrdname['postfix_queue'],
+        "--step", "#{@config['Smain']['step']}",
+        "--start", "#{Time.now.to_i-1}",
+        "DS:active:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "DS:deferred:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "DS:incoming:GAUGE:#{@config['Smain']['step']+60}:0:U",
          "DS:maildrop:GAUGE:#{@config['Smain']['step']+60}:0:U",
@@ -70,8 +73,9 @@ class Spostfix
   end
 
   def write
-    @rrd['postfix_queue'].update("active:deferred:incoming:maildrop:corrupt:hold",
-      ["N:#{@data['active']}:#{@data['deferred']}:#{@data['incoming']}:#{@data['maildrop']}:#{@data['corrupt']}:#{@data['hold']}"])
+    RDD.update(
+      @rrdname['postfix_queue'],
+      "N:#{@data['active']}:#{@data['deferred']}:#{@data['incoming']}:#{@data['maildrop']}:#{@data['corrupt']}:#{@data['hold']}")
   end
 
   def graph(time)
@@ -89,48 +93,48 @@ class Spostfix
       @suffix = "year"
     end
 
-    RRDtool.graph(
-      ["#{@config['Smain']['graphdir']}/postfix-queue-#{@suffix}.png",
-       "--title", "Network Interface #{interface}",
-       "--start", "#{@start}", 
-       "--interlace",
-       "--imgformat", "PNG",
-       "--width=600", "--height=150",
-       "--vertical-label", "queuefiles",
-       "--color", "SHADEA#ffffff",
-       "--color", "SHADEB#ffffff",
-       "--color", "BACK#ffffff",
-       "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}:active:AVERAGE",
-       "LINE2:active#00ff00:Active ",
-       "GPRINT:active,LAST: %12,3lf %s",
-       "GPRINT:active,MAX: %12,3lf %s",
-       "GPRINT:active,AVERAGE: %12,3lf %s\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}:deferred:AVERAGE",
-       "LINE2:deferred#00ff00:Deferred ",
-       "GPRINT:deferred,LAST: %12,3lf %s",
-       "GPRINT:deferred,MAX: %12,3lf %s",
-       "GPRINT:deferred,AVERAGE: %12,3lf %s\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}:incoming:AVERAGE",
-       "LINE2:incoming#00ff00:Incoming ",
-       "GPRINT:incoming,LAST: %12,3lf %s",
-       "GPRINT:incoming,MAX: %12,3lf %s",
-       "GPRINT:incoming,AVERAGE: %12,3lf %s\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}::AVERAGE",
-       "LINE2:maildrop#00ff00:Maildrop ",
-       "GPRINT:maildrop,LAST: %12,3lf %s",
-       "GPRINT:maildrop,MAX: %12,3lf %s",
-       "GPRINT:maildrop,AVERAGE: %12,3lf %s\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}::AVERAGE",
-       "LINE2:corrupt#00ff00:Corrupt ",
-       "GPRINT:corrupt,LAST: %12,3lf %s",
-       "GPRINT:corrupt,MAX: %12,3lf %s",
-       "GPRINT:corrupt,AVERAGE: %12,3lf %s\\n",
-       "DEF:r=#{@rrd['postfix_queue'].rrdname}::AVERAGE",
-       "LINE2:hold#00ff00:Held ",
-       "GPRINT:hold,LAST: %12,3lf %s",
-       "GPRINT:hold,MAX: %12,3lf %s",
-       "GPRINT:hold,AVERAGE: %12,3lf %s"])
+    RRD.graph(
+      "#{@config['Smain']['graphdir']}/postfix-queue-#{@suffix}.png",
+      "--title", "Network Interface #{interface}",
+      "--start", "#{@start}", 
+      "--interlace",
+      "--imgformat", "PNG",
+      "--width=600", "--height=150",
+      "--vertical-label", "queuefiles",
+      "--color", "SHADEA#ffffff",
+      "--color", "SHADEB#ffffff",
+      "--color", "BACK#ffffff",
+      "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}:active:AVERAGE",
+      "LINE2:active#00ff00:Active ",
+      "GPRINT:active,LAST: %12,3lf %s",
+      "GPRINT:active,MAX: %12,3lf %s",
+      "GPRINT:active,AVERAGE: %12,3lf %s\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}:deferred:AVERAGE",
+      "LINE2:deferred#00ff00:Deferred ",
+      "GPRINT:deferred,LAST: %12,3lf %s",
+      "GPRINT:deferred,MAX: %12,3lf %s",
+      "GPRINT:deferred,AVERAGE: %12,3lf %s\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}:incoming:AVERAGE",
+      "LINE2:incoming#00ff00:Incoming ",
+      "GPRINT:incoming,LAST: %12,3lf %s",
+      "GPRINT:incoming,MAX: %12,3lf %s",
+      "GPRINT:incoming,AVERAGE: %12,3lf %s\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
+      "LINE2:maildrop#00ff00:Maildrop ",
+      "GPRINT:maildrop,LAST: %12,3lf %s",
+      "GPRINT:maildrop,MAX: %12,3lf %s",
+      "GPRINT:maildrop,AVERAGE: %12,3lf %s\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
+      "LINE2:corrupt#00ff00:Corrupt ",
+      "GPRINT:corrupt,LAST: %12,3lf %s",
+      "GPRINT:corrupt,MAX: %12,3lf %s",
+      "GPRINT:corrupt,AVERAGE: %12,3lf %s\\n",
+      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
+      "LINE2:hold#00ff00:Held ",
+      "GPRINT:hold,LAST: %12,3lf %s",
+      "GPRINT:hold,MAX: %12,3lf %s",
+      "GPRINT:hold,AVERAGE: %12,3lf %s\\n")
     end
   end
 end

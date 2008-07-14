@@ -57,6 +57,10 @@ Sdisk:
   - idad0s1f
   - idad0s1e
   - idad0s1d
+  
+  mounts:
+    MOUNTS
+    idad0s1a: /
 
 
 ## Configuration for load statistics
@@ -91,6 +95,7 @@ Snetwork:
 Spostfix:
   ## Prefix for rrd and graph files
   prefix: postfix
+  spooldir: POSTIFX_SPOOL
 
 
 ## Configuration for processes statistics

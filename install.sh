@@ -81,7 +81,7 @@ HDDS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | 
         cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
 
 # Get network interfaces
-INTERFACES=$(ifconfig | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
+INTERFACES=$(ifconfig | grep -v lo | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
         tr ":" " " | tr "\n" " " | sed 's: $::')
 for i in $INTERFACES; do
 	INTCONF="+="  - ${i}\n"

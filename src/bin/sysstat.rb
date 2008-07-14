@@ -28,7 +28,7 @@
 # Ingore HANGUP signal
 Signal.trap('HUP', 'IGNORE')
 
-@config = "INSTALLDIR/etc/sysstat.conf"
+@config = "INSTALLDIR/etc/sysstat.yml"
 $SVERSION = "2.17"
 
 # Add lib directories to include path
@@ -36,9 +36,10 @@ $: << "INSTALLDIR/lib"
 
 # Load modules and classes
 require "getoptlong.rb"
-require "rubygems"
-require "RRDtool"
+require "yaml"
+require "RRD"
 require "Smain.rb"
+
 
 # Get arguments
 options = GetoptLong.new

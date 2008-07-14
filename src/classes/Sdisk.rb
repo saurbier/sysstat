@@ -28,14 +28,14 @@
 
 
 class Sdisk
-  @config = 0
-  @data = Hash.new 
-  @rrd = Hash.new
-
   def initialize(config)
     @config = config
+
+    @data = Hash.new
+    @rrdname = Hash.new
+
     @config['Sdisk']['devices'].each do |hdd|
-      @rrd[hdd] = RRDtool.new("#{@config['Smain']['dbdir']}/#{@config['Sdisk']['prefix']}-#{hdd}.rrd")
+      @rrdname[hdd] = "#{@config['Smain']['dbdir']}/#{@config['Sdisk']['prefix']}-#{hdd}.rrd"
       @data[hdd] = Hash.new
       @data[hdd]['size'] = 0
       @data[hdd]['used'] = 0
@@ -44,14 +44,17 @@ class Sdisk
 
   def mkdb
     @config['Sdisk']['devices'].each do |hdd|
-      if(!FileTest.exist?(@rrd[hdd].rrdname))
-        @rrd[hdd].create(@config['Smain']['step'], Time.now.to_i-1,
-          ["DS:size:GAUGE:#{@config['Smain']['step']+60}:0:U",
-           "DS:used:GAUGE:#{@config['Smain']['step']+60}:0:U",
-           "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-           "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-           "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-           "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+      if(!FileTest.exist?(@rrdname[hdd]))
+        RRD.create(
+          @rrdname[hdd],
+          "--step", "#{@config['Smain']['step']}",
+          "--start", "#{Time.now.to_i-1}",
+          "DS:size:GAUGE:#{@config['Smain']['step']+60}:0:U",
+          "DS:used:GAUGE:#{@config['Smain']['step']+60}:0:U",
+          "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+          "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+          "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+          "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760")
       end
     end
   end
@@ -71,8 +74,7 @@ class Sdisk
 
   def write
     @config['Sdisk']['devices'].each do |hdd|
-      @rrd[hdd].update("size:used",
-        ["N:#{@data[hdd]['size']}:#{@data[hdd]['used']}"])
+      RRD.update(@rrdname[hdd], "N:#{@data[hdd]['size']}:#{@data[hdd]['used']}")
     end
   end
 
@@ -92,31 +94,32 @@ class Sdisk
     end
 
     @config['Sdisk']['devices'].each do |hdd|
-      RRDtool.graph(
-        ["#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png",
-         "--title", "Usage statistics for /dev/#{hdd}",
-         "--start", "#{@start}", 
-         "--interlace",
-         "--imgformat", "PNG",
-         "--width=600", "--height=150",
-         "--vertical-label", "MBytes",
-         "--color", "SHADEA#ffffff",
-         "--color", "SHADEB#ffffff",
-         "--color", "BACK#ffffff",
-         "--base", "1024",
-         "DEF:sizek=#{@rrd[hdd].rrdname}:size:AVERAGE",
-         "DEF:usedk=#{@rrd[hdd].rrdname}:used:AVERAGE",
-         "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*",
-         "CDEF:free=size,used,-",
-         "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",
-         "AREA:used#0000ff:usage",
-         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf %sB",
-         "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg: %12.3lf %sB",
-         "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax: %12.3lf %sB\\n",
-         "AREA:free#55dd55:free:STACK",
-         "VDEF:freelast=free,LAST",   "GPRINT:freelast:  %12.3lf %sB",
-         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf %sB",
-         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf %sB"])
+      RRD.graph(
+        "#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png",
+        "--title", "Usage statistics for #{@config['Sdisk']['mounts'][hdd]} (/dev/#{hdd})",
+        "--start", "#{@start}", 
+        "--interlace",
+        "--imgformat", "PNG",
+        "--width=600", "--height=150",
+        "--vertical-label", "Bytes",
+        "--color", "SHADEA#ffffff",
+        "--color", "SHADEB#ffffff",
+        "--color", "BACK#ffffff",
+        "--base", "1024",
+        "DEF:sizek=#{@rrdname[hdd]}:size:AVERAGE",
+        "DEF:usedk=#{@rrdname[hdd]}:used:AVERAGE",
+        "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*",
+        "CDEF:free=size,used,-",
+        "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",
+        "AREA:used#EA644A:usage",
+        "LINE1:used#CC3118",
+        "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf %sB",
+        "VDEF:usedavg=used,AVERAGE", "GPRINT:usedavg: %12.3lf %sB",
+        "VDEF:usedmax=used,MAXIMUM", "GPRINT:usedmax: %12.3lf %sB\\n",
+        "COMMENT:  free",
+        "VDEF:freelast=free,LAST",   "GPRINT:freelast:  %12.3lf %sB",
+        "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf %sB",
+        "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf %sB\\n")
     end
   end
 end
