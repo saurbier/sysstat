@@ -50,32 +50,29 @@ class Spostfix
         "--step", "#{@config['Smain']['step']}",
         "--start", "#{Time.now.to_i-1}",
         "DS:active:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:deferred:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:incoming:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:maildrop:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:corrupt:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:hold:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
-         "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
-         "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760"])
+        "DS:deferred:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "DS:hold:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+        "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760",
+        "RRA:MAX:0.5:1:2160", "RRA:MAX:0.5:5:2016",
+        "RRA:MAX:0.5:15:2880", "RRA:MAX:0.5:60:8760")
     end
   end
 
   def get
     # Queue
-    @data['active'] = %x[find #{@config['postfix_spooldir']}/active -type f | wc -l]
-    @data['deferred'] = %x[find #{@config['postfix_spooldir']}/deferred -type f | wc -l]
-    @data['incoming'] = %x[find #{@config['postfix_spooldir']}/incoming -type f | wc -l]
-    @data['maildrop'] = %x[find #{@config['postfix_spooldir']}/maildrop -type f | wc -l]
-    @data['corrupt'] = %x[find #{@config['postfix_spooldir']}/corrupt -type f | wc -l]
-    @data['hold'] = %x[find #{@config['postfix_spooldir']}/hold -type f | wc -l]
+    @data['active'] = %x[find #{@config['postfix_spooldir']}/active -type f | wc -l | tr -d " " | tr -d "\n"].to_i
+    @data['active'] += %x[find #{@config['postfix_spooldir']}/incoming -type f | wc -l | tr -d " " | tr -d "\n"].to_i
+    @data['active'] += %x[find #{@config['postfix_spooldir']}/maildrop -type f | wc -l | tr -d " " | tr -d "\n"].to_i
+    @data['deferred'] = %x[find #{@config['postfix_spooldir']}/deferred -type f | wc -l | tr -d " " | tr -d "\n"].to_i
+    @data['hold'] = %x[find #{@config['postfix_spooldir']}/hold -type f | wc -l | tr -d " " | tr -d "\n"].to_i
+    @data['hold'] += %x[find #{@config['postfix_spooldir']}/corrupt -type f | wc -l | tr -d " " | tr -d "\n"].to_i
   end
 
   def write
     RDD.update(
       @rrdname['postfix_queue'],
-      "N:#{@data['active']}:#{@data['deferred']}:#{@data['incoming']}:#{@data['maildrop']}:#{@data['corrupt']}:#{@data['hold']}")
+      "N:#{@data['active']}:#{@data['deferred']}:#{@data['hold']}")
   end
 
   def graph(time)
@@ -105,36 +102,21 @@ class Spostfix
       "--color", "SHADEB#ffffff",
       "--color", "BACK#ffffff",
       "COMMENT:\t\t\t   Current\t\t  Average\t\t Maximum\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}:active:AVERAGE",
-      "LINE2:active#00ff00:Active ",
-      "GPRINT:active,LAST: %12,3lf %s",
-      "GPRINT:active,MAX: %12,3lf %s",
-      "GPRINT:active,AVERAGE: %12,3lf %s\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}:deferred:AVERAGE",
-      "LINE2:deferred#00ff00:Deferred ",
-      "GPRINT:deferred,LAST: %12,3lf %s",
-      "GPRINT:deferred,MAX: %12,3lf %s",
-      "GPRINT:deferred,AVERAGE: %12,3lf %s\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}:incoming:AVERAGE",
-      "LINE2:incoming#00ff00:Incoming ",
-      "GPRINT:incoming,LAST: %12,3lf %s",
-      "GPRINT:incoming,MAX: %12,3lf %s",
-      "GPRINT:incoming,AVERAGE: %12,3lf %s\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
-      "LINE2:maildrop#00ff00:Maildrop ",
-      "GPRINT:maildrop,LAST: %12,3lf %s",
-      "GPRINT:maildrop,MAX: %12,3lf %s",
-      "GPRINT:maildrop,AVERAGE: %12,3lf %s\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
-      "LINE2:corrupt#00ff00:Corrupt ",
-      "GPRINT:corrupt,LAST: %12,3lf %s",
-      "GPRINT:corrupt,MAX: %12,3lf %s",
-      "GPRINT:corrupt,AVERAGE: %12,3lf %s\\n",
-      "DEF:r=#{@rrdname['postfix_queue']}::AVERAGE",
-      "LINE2:hold#00ff00:Held ",
-      "GPRINT:hold,LAST: %12,3lf %s",
-      "GPRINT:hold,MAX: %12,3lf %s",
-      "GPRINT:hold,AVERAGE: %12,3lf %s\\n")
+      "DEF:active=#{@rrdname['postfix_queue']}:active:AVERAGE",
+      "LINE2:active#24BC14:Active+Incoming+Maildrop ",
+      "VDEF:actlast=active,LAST", "GPRINT:actlast:%12.3lf",
+      "VDEF:actmax=active,MAXIMUM", "GPRINT:actmax:%12.3lf",
+      "VDEF:actavg=active,AVERAGE", "GPRINT:actavg:%12.3lf\\n",
+      "DEF:deferred=#{@rrdname['postfix_queue']}:deferred:AVERAGE",
+      "LINE2:deferred#C9B215:Deferred ",
+      "VDEF:deflast=deferred,LAST", "GPRINT:deflast: %12.3lf %s",
+      "VDEF:defmax=deferred,MAXIMUM", "GPRINT:defmax: %12.3lf %s",
+      "VDEF:defavg=deferred,AVERAGE", "GPRINT:defavg: %12.3lf %s\\n",
+      "DEF:incoming=#{@rrdname['postfix_queue']}:incoming:AVERAGE",
+      "LINE2:hold#CC3118:Hold+Corrupt ",
+      "VDEF:holdlast=hold,LAST", "GPRINT:holdlast: %12.3lf %s",
+      "VDEF:holdmax=hold,MAXIMUM", "GPRINT:holdmax: %12.3lf %s",
+      "VDEF:holdavg=hold,AVERAGE", "GPRINT:holdavg: %12.3lf %s\\n")
     end
   end
 end

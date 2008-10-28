@@ -77,29 +77,54 @@ elif [ `uname -s` = "Linux" ]; then
 fi
 
 # Get hard disks
-HDDS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs" | \
-        cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
+DISKS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs")
+HDDS=$(echo "$DISKS" | cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
+MOUNTS=$(echo "$DISKS" | cut -f3 -d" ")
+
+HDD="  - $(echo "$HDDS" | sed 's/ /\
+  - /g')"
+
+TMP=""
+i=0
+for part in $HDD; do
+  j=0
+  for mp in $MOUNTS; do
+    if [ "$i" = "$j" ]; then
+      TMP="$TMP    $part: $mp
+"
+    fi
+    j=$(($j + 1))
+  done
+  i=$((i+1))
+done
+
+MOUNTS=$TMP
+
 
 # Get network interfaces
 INTERFACES=$(ifconfig | grep -v lo | egrep "^[a-z].*" | tr -s "[:space:]" | cut -f1 -d" " | \
-        tr ":" " " | tr "\n" " " | sed 's: $::')
-for i in $INTERFACES; do
-	INTCONF="+="  - ${i}\n"
-done
+        tr -d ":" | tr "\n" " " | sed 's: $::')
+INTERCONF="  - $(echo "$INTERFACES" | sed 's/ /\
+  - /g')"
 
 # Create temporary files and directories
 mkdir -p tmp
 
 # Create configuration file
-cat src/conf/sysstat.yml | \
+cat sysstat.part1.yml | \
     sed "s:OS:$OS:" | \
     sed "s:INSTALLDIR:$PREFIX:" | \
     sed "s:GRAPHDIR:$GRAPHDIR:" | \
-    sed "s:DBDIR:$DBDIR:" | \
-    sed "s:INTERFACES:$INTCONF:" | \
-    sed "s:HDDS:$HDDS:" | \
+    sed "s:DBDIR:$DBDIR:" > tmp/sysstat.yml
+echo "$HDD" >> tmp/sysstat.yml
+echo "
+  mounts: " >> tmp/sysstat.yml
+echo "$MOUNTS" >> tmp/sysstat.yml
+cat sysstat.part2.yml | \
     sed "s:RAM:$RAM:" | \
-    sed "s:SWAP:$SWAP:" > tmp/sysstat.yml
+    sed "s:SWAP:$SWAP:" >> tmp/sysstat.yml
+echo "$INTERCONF" >> tmp/sysstat.yml
+cat sysstat.part3.yml >> tmp/sysstat.yml
 
 # Create daemon
 sed "s:INSTALLDIR:$PREFIX:" src/bin/sysstat.rb > tmp/sysstat.rb

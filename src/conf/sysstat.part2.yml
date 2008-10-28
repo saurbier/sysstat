@@ -1,0 +1,21 @@
+## Configuration for load statistics
+Sload: 
+  ## Prefix for rrd and graph files
+  prefix: load
+
+
+## Configuration for memory statistics
+Smemory: 
+  ## Prefix for rrd and graph files
+  prefix: memory
+  ramtotal: RAM
+  swaptotal: SWAP
+
+
+## Configuration for network statistics
+Snetwork: 
+  ## Prefix for rrd and graph files
+  prefix: net
+
+  ## Graphed interfaces
+  interfaces:

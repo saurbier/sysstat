@@ -1,13 +1,11 @@
 TODO:
 	- error graph for network interfaces
-	- postfix module totally broken
+	- postfix statistics
     - Fix module template
 	- Config generation
 
-Version 2.17 - 2008-
-    - Added error graph for network interfaces (CHECK)
-    - Added postfix mailqueue statistics (CHECK)
-    - Changed configuration to YAML (TODO: config generation)
+Version 2.17 - 2008-10-28
+    - Changed configuration to YAML
     - Changed class variables to instance variables
     - changed buffer objects to local scope (were: instance variables)
 	- Replaced third party RRDtool module with RRDTools own RRD module
