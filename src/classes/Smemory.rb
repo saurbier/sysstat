@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,27 +40,16 @@ class Smemory
 
   def mkdb
     if(!FileTest.exist?(@rrdname))
-#      if(@config['Smain']['os'] == "freebsd6")
-#        RRD.create(
-#          @rrdname,
-#          "--step", "#{@config['Smain']['step']}",
-#          "--start", "#{Time.now.to_i-1}",
-#          ["DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-#           "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-#           "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-#           "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
-#           "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-#           "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"])
-#      else
-        RRD.create(
-          @rrdname,
-          "--step", "#{@config['Smain']['step']}",
-          "--start", "#{Time.now.to_i-1}",
-          ["DS:ram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-           "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
-           "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-           "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"])
-#      end
+      RRD.create(
+        @rrdname,
+        "--step", "#{@config['Smain']['step']}",
+        "--start", "#{Time.now.to_i-1}",
+        ["DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+         "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+         "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+         "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
+         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"])
     end
   end
 
@@ -70,24 +59,22 @@ class Smemory
       output = %x[vmstat]
       output.each do |line|
         linea = line.split()
-        #@data['uram'] = linea[3].to_i
+        @data['uram'] = linea[3].to_i
         @data['fram'] = linea[4].to_i
         linea = nil
       end
-      
-      # @data['kram'] = 0
 
       # Kernel size
-      # output = %x[kldstat]
-      # output.each do |line|
-      #   @data['kram'] += line.split()[3].hex/1024
-      # end
+      output = %x[kldstat]
+      output.each do |line|
+        @data['kram'] += line.split()[3].hex/1024
+      end
 
       # Kernel memory
-      # output = %x[vmstat -m]
-      # output.each do |line|
-      #   @data['kram'] += line.split()[2].to_i
-      # end
+      output = %x[vmstat -m]
+      output.each do |line|
+        @data['kram'] += line.split()[2].to_i
+      end
 
       # Swap
       output = %x[swapinfo -k]
@@ -96,24 +83,16 @@ class Smemory
       end
       output = nil
     elsif(@config['Smain']['os'] == "linux2.6")
-      output = File.new("/proc/meminfo", "r") 
-      output.each do |line|
-        if(line =~ /MemFree:/)
-          @data['fram'] = line.split()[1].to_i
-        elsif(line =~ /SwapFree:/)
-          @data['fswap'] = line.split()[1].to_i
-        end
-      end
-      output.close
+      output = %x[free -k].split("\n")
+      @data['uram'] = output[2].split()[2]
+      @data['fram'] = output[1].split()[3]
+      @data['kram'] = output[1].split()[6]
+      @data['fswap'] = output[3].split()[3]
     end
   end
 
   def write
-#    if(@config['Smain']['os'] == "freebsd6")
-#      RRD.update(@rrdname, "N:#{@data['kram']}:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
-#    else
-      RRD.update(@rrdname, "N:#{@data['fram']}:#{@data['fswap']}")
-#    end
+    RRD.update(@rrdname, "N:#{@data['kram']}:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
   end
 
   def graph(timeframe)

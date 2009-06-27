@@ -1,7 +1,6 @@
 TODO:
 	- Maybe: CPUFreq Statistics
 	- Upgrade process
-	- FreeBSD: Kernel-Memory
 	
 Version 2.18 - 2009-0
 	- Fixed install.sh (no config created)
@@ -9,6 +8,7 @@ Version 2.18 - 2009-0
 	- Added error graph for network interfaces
 	- Added back-to-index links to html-files
 	- Added user statistics
+	- Added kernel memory statistics (caches+buffers under Linux)
 
 Version 2.17 - 2008-10-28
     - Changed configuration to YAML
