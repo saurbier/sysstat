@@ -110,7 +110,7 @@ class Sload
       "--color", "SHADEB#ffffff",
       "--color", "BACK#ffffff",
       "--units-exponent", "0",
-      "COMMENT:\t\t\t   Current\t     Average\t  Maximum\\n",
+      "COMMENT:\t\t      Current\t    Average\t Maximum\\n",
       "DEF:load1=#{@rrdname}:load1:AVERAGE",
       "DEF:load5=#{@rrdname}:load5:AVERAGE",
       "DEF:load15=#{@rrdname}:load15:AVERAGE",

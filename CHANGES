@@ -1,7 +1,7 @@
 TODO:
 	- Kernel memory statistics (caches+buffers under Linux)
 	
-Version 2.18 - 2009-06-28
+Version 2.18 - 2009-06-27
 	- Fixed install.sh (no config created)
 	- Removed old and broken template files
 	- Added error graph for network interfaces

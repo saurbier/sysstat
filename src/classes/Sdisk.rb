@@ -110,7 +110,7 @@ class Sdisk
         "DEF:usedk=#{@rrdname[hdd]}:used:AVERAGE",
         "CDEF:size=sizek,1024,*", "CDEF:used=usedk,1024,*",
         "CDEF:free=size,used,-",
-        "COMMENT:\t\t\t Current\t\t  Average\t\t   Maximum\\n",
+        "COMMENT:\t\t  Current\t    Average\t    Maximum\\n",
         "AREA:used#EA644A:usage",
         "LINE1:used#CC3118",
         "VDEF:usedlast=used,LAST",   "GPRINT:usedlast: %12.3lf %sB",

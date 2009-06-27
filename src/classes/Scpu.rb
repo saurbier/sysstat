@@ -113,7 +113,7 @@ class Scpu
       "--color", "SHADEB#ffffff",
       "--color", "BACK#ffffff",
       "--units-exponent", "0",
-      "COMMENT:\t   Current\t   Average\t    Maximum\\n",
+      "COMMENT:\t   Current\tAverage\t\tMaximum\\n",
       "DEF:usr=#{@rrdname}:usr:AVERAGE",
       "DEF:sys=#{@rrdname}:sys:AVERAGE",
       "DEF:idl=#{@rrdname}:idl:AVERAGE",
