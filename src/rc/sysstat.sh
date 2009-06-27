@@ -27,7 +27,7 @@
 # SUCH DAMAGE.
 
 
-SYSSTAT_RB=INSTALLDIR/bin/sysstat.rb
+SYSSTAT_RB=BINDIR/sysstat.rb
 PID_FILE=/var/run/sysstat.pid
 
 case "$1" in

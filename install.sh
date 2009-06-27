@@ -30,7 +30,6 @@
 # Initialize variable with default values
 PREFIX="/usr/local/sysstat"
 GRAPHDIR="$PREFIX/output"
-DBDIR="$PREFIX/db"
 STEP=300
 GINTERVAL=900
 
@@ -61,9 +60,12 @@ done
 
 # Prepare variables
 PREFIX=$(echo $PREFIX | sed "s:*/$::")
-CONF="$PREFIX/etc/sysstat.conf.rb"
-DBDIR="$PREFIX/db"
 GRAPHDIR=$(echo $GRAPHDIR | sed "s:*/$::")
+BINDIR="$PREFIX/bin"
+DBDIR="$PREFIX/db/sysstat"
+ETCDIR="$PREFIX/etc/sysstat"
+LIBDIR="$PREFIX/lib/sysstat"
+
 
 # Get Ram, Swap and OS
 if [ `uname -s` = "FreeBSD" ]; then
@@ -81,16 +83,13 @@ DISKS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs")
 HDDS=$(echo "$DISKS" | cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
 MOUNTS=$(echo "$DISKS" | cut -f3 -d" ")
 
-HDD="  - $(echo "$HDDS" | sed 's/ /\
-  - /g')"
-
 TMP=""
 i=0
-for part in $HDD; do
+for part in $HDDS; do
   j=0
   for mp in $MOUNTS; do
     if [ "$i" = "$j" ]; then
-      TMP="$TMP    $part: $mp
+      TMP="$TMP    - $part: $mp
 "
     fi
     j=$(($j + 1))
@@ -127,7 +126,9 @@ echo "$INTERCONF" >> tmp/sysstat.yml
 cat src/conf/sysstat.part3.yml >> tmp/sysstat.yml
 
 # Create daemon
-sed "s:INSTALLDIR:$PREFIX:" src/bin/sysstat.rb > tmp/sysstat.rb
+cat src/bin/sysstat.rb | \
+	sed "s:ETCDIR:$ETCDIR:" |
+	sed "s:LIBDIR:$LIBDIR:" > tmp/sysstat.rb
 
 # Create classes
 for i in $(ls src/classes/*.rb); do
@@ -159,44 +160,39 @@ mv tmp/index.html.tmp tmp/index.html
 # Remove temporary files
 rm tmp/hdds.html
 rm tmp/network.html
-rm tmp/template.html
 
 # Create rc/init script
-sed "s:INSTALLDIR:$PREFIX:" src/rc/sysstat.sh > tmp/sysstat.sh
+sed "s:BINDIR:$BINDIR:" src/rc/sysstat.sh > tmp/sysstat.sh
 
 # Install files
 if [ `uname -s` = "FreeBSD" ]; then
-    install -d -o root -g wheel -m 755 $PREFIX
-    install -d -o root -g wheel -m 755 $PREFIX/bin
-    install -d -o root -g wheel -m 755 $PREFIX/etc
-    install -d -o root -g wheel -m 755 $PREFIX/db
-    install -d -o root -g wheel -m 755 $PREFIX/db/sysstat
-    install -d -o root -g wheel -m 755 $PREFIX/lib
-    install -d -o root -g wheel -m 755 $PREFIX/lib/sysstat
-    install -S -o root -g wheel -m 644 tmp/sysstat.yml $PREFIX/etc/sysstat
+    install -d -o root -g wheel -m 755 $BINDIR
+   	install -d -o root -g wheel -m 755 $ETCDIR
+    install -d -o root -g wheel -m 755 $DBDIR
+    install -d -o root -g wheel -m 755 $LIBDIR
+
+    install -S -o root -g wheel -m 644 tmp/sysstat.yml $ETCDIR
     for i in $(ls tmp/S*.rb); do
-        install -S -o root -g wheel -m 644 $i $PREFIX/lib/sysstat
+        install -S -o root -g wheel -m 644 $i $LIBDIR
     done
-    install -S -o root -g wheel -m 755 tmp/sysstat.rb $PREFIX/bin
-    install -S -o root -g wheel -m 755 tmp/sysstat.sh $PREFIX/bin
+    install -S -o root -g wheel -m 755 tmp/sysstat.rb $BINDIR
+    install -S -o root -g wheel -m 755 tmp/sysstat.sh $BINDIR
     install -d -o root -g wheel -m 755 $GRAPHDIR
     for i in $(ls tmp/*.html); do
         install -S -o root -g wheel -m 644 $i $GRAPHDIR
     done
 elif [ `uname -s` = "Linux" ]; then
-    install -d -o root -g root -m 755 $PREFIX
-    install -d -o root -g root -m 755 $PREFIX/bin
-    install -d -o root -g root -m 755 $PREFIX/etc
-    install -d -o root -g root -m 755 $PREFIX/db
-    install -d -o root -g root -m 755 $PREFIX/db/sysstat
-    install -d -o root -g root -m 755 $PREFIX/lib
-    install -d -o root -g root -m 755 $PREFIX/lib/sysstat
-    install -o root -g root -m 644 tmp/sysstat.yml $PREFIX/etc/sysstat
+    install -d -o root -g root -m 755 $BINDIR
+    install -d -o root -g root -m 755 $ETCDIR
+    install -d -o root -g root -m 755 $DBDIR
+    install -d -o root -g root -m 755 $LIBDIR
+
+    install -o root -g root -m 644 tmp/sysstat.yml $ETCDIR
     for i in $(ls tmp/S*.rb); do
-        install -o root -g root -m 644 $i $PREFIX/lib/sysstat
+        install -o root -g root -m 644 $i $LIBDIR
     done
-    install -o root -g root -m 755 tmp/sysstat.rb $PREFIX/bin
-    install -o root -g root -m 755 tmp/sysstat.sh $PREFIX/bin
+    install -o root -g root -m 755 tmp/sysstat.rb $BINDIR
+    install -o root -g root -m 755 tmp/sysstat.sh $BINDIR
     install -d -o root -g root -m 755 $GRAPHDIR
     for i in $(ls tmp/*.html); do
         install -o root -g root -m 644 $i $GRAPHDIR
