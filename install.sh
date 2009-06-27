@@ -82,6 +82,8 @@ fi
 DISKS=$(mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs")
 HDDS=$(echo "$DISKS" | cut -f1 -d" " | cut -f3 -d"/" | tr "\n" " " | sed 's: $::')
 MOUNTS=$(echo "$DISKS" | cut -f3 -d" ")
+HDD="  - $(echo "$HDDS" | sed 's/ /\
+  - /g')"
 
 TMP=""
 i=0
@@ -89,7 +91,7 @@ for part in $HDDS; do
   j=0
   for mp in $MOUNTS; do
     if [ "$i" = "$j" ]; then
-      TMP="$TMP    - $part: $mp
+      TMP="$TMP    $part: $mp
 "
     fi
     j=$(($j + 1))
@@ -112,7 +114,7 @@ mkdir -p tmp
 # Create configuration file
 cat src/conf/sysstat.part1.yml | \
     sed "s:OS:$OS:" | \
-    sed "s:INSTALLDIR:$PREFIX:" | \
+    sed "s:LIBDIR:$LIBDIR:" | \
     sed "s:GRAPHDIR:$GRAPHDIR:" | \
     sed "s:DBDIR:$DBDIR:" > tmp/sysstat.yml
 echo "$HDD" >> tmp/sysstat.yml

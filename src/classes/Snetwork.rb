@@ -168,7 +168,7 @@ class Snetwork
         "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:%12.3lf %s",
         "VDEF:rxtotal=rx,TOTAL", "GPRINT:rxtotal:%12.1lf %sb\\n",
         "DEF:tx=#{@rrdname[interface]}:oerr:AVERAGE",
-        "CDEF:txa=tx,-1,*"
+        "CDEF:txa=tx,-1,*",
         "AREA:txa#0000ff:Outbound ",
         "VDEF:txlast=tx,LAST", "GPRINT:txlast:%12.3lf %s",
         "VDEF:txave=tx,AVERAGE", "GPRINT:txave:%12.3lf %s",

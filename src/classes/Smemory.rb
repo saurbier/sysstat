@@ -44,12 +44,12 @@ class Smemory
         @rrdname,
         "--step", "#{@config['Smain']['step']}",
         "--start", "#{Time.now.to_i-1}",
-        ["DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-         "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
-         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
-         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760"])
+        "DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+        "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
+        "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
+        "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760")
     end
   end
 
