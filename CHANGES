@@ -1,8 +1,11 @@
 TODO:
-	- error graph for network interfaces
-	- postfix statistics
-    - Fix module template
 	- Config generation
+	
+Version 2.18 - 2009-0
+	- Fixed install.sh (no config created)
+	- Removed old and broken template files
+	- Added error graph for network interfaces
+	- Added back-to-index links to html-files
 
 Version 2.17 - 2008-10-28
     - Changed configuration to YAML

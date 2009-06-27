@@ -9,7 +9,7 @@ Install script:
     - grep
     
 Runtime:
-    - RRDTool >= 1.2.0
+    - RRDTool >= 1.2.0 with Ruby bindings
 
 2. Installation
 Use the install.sh script for installation. For further help

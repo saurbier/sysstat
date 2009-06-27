@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2006,2007 Konstantin Saurbier 
+# Copyright (c) 2006-2009 Konstantin Saurbier 
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ STEP=300
 GINTERVAL=900
 
 # Read arguments
-while getopts hI:O:P:s:S: ARGS; do
+while getopts hI:O: ARGS; do
     case $ARGS in
         h)
             # Display help
@@ -111,7 +111,7 @@ INTERCONF="  - $(echo "$INTERFACES" | sed 's/ /\
 mkdir -p tmp
 
 # Create configuration file
-cat sysstat.part1.yml | \
+cat src/conf/sysstat.part1.yml | \
     sed "s:OS:$OS:" | \
     sed "s:INSTALLDIR:$PREFIX:" | \
     sed "s:GRAPHDIR:$GRAPHDIR:" | \
@@ -120,11 +120,11 @@ echo "$HDD" >> tmp/sysstat.yml
 echo "
   mounts: " >> tmp/sysstat.yml
 echo "$MOUNTS" >> tmp/sysstat.yml
-cat sysstat.part2.yml | \
+cat src/conf/sysstat.part2.yml | \
     sed "s:RAM:$RAM:" | \
     sed "s:SWAP:$SWAP:" >> tmp/sysstat.yml
 echo "$INTERCONF" >> tmp/sysstat.yml
-cat sysstat.part3.yml >> tmp/sysstat.yml
+cat src/conf/sysstat.part3.yml >> tmp/sysstat.yml
 
 # Create daemon
 sed "s:INSTALLDIR:$PREFIX:" src/bin/sysstat.rb > tmp/sysstat.rb
@@ -170,10 +170,12 @@ if [ `uname -s` = "FreeBSD" ]; then
     install -d -o root -g wheel -m 755 $PREFIX/bin
     install -d -o root -g wheel -m 755 $PREFIX/etc
     install -d -o root -g wheel -m 755 $PREFIX/db
+    install -d -o root -g wheel -m 755 $PREFIX/db/sysstat
     install -d -o root -g wheel -m 755 $PREFIX/lib
-    install -S -o root -g wheel -m 644 tmp/sysstat.conf $PREFIX/etc
+    install -d -o root -g wheel -m 755 $PREFIX/lib/sysstat
+    install -S -o root -g wheel -m 644 tmp/sysstat.yml $PREFIX/etc/sysstat
     for i in $(ls tmp/S*.rb); do
-        install -S -o root -g wheel -m 644 $i $PREFIX/lib
+        install -S -o root -g wheel -m 644 $i $PREFIX/lib/sysstat
     done
     install -S -o root -g wheel -m 755 tmp/sysstat.rb $PREFIX/bin
     install -S -o root -g wheel -m 755 tmp/sysstat.sh $PREFIX/bin
@@ -186,10 +188,12 @@ elif [ `uname -s` = "Linux" ]; then
     install -d -o root -g root -m 755 $PREFIX/bin
     install -d -o root -g root -m 755 $PREFIX/etc
     install -d -o root -g root -m 755 $PREFIX/db
+    install -d -o root -g root -m 755 $PREFIX/db/sysstat
     install -d -o root -g root -m 755 $PREFIX/lib
-    install -o root -g root -m 644 tmp/sysstat.conf $PREFIX/etc
+    install -d -o root -g root -m 755 $PREFIX/lib/sysstat
+    install -o root -g root -m 644 tmp/sysstat.yml $PREFIX/etc/sysstat
     for i in $(ls tmp/S*.rb); do
-        install -o root -g root -m 644 $i $PREFIX/lib
+        install -o root -g root -m 644 $i $PREFIX/lib/sysstat
     done
     install -o root -g root -m 755 tmp/sysstat.rb $PREFIX/bin
     install -o root -g root -m 755 tmp/sysstat.sh $PREFIX/bin
@@ -208,7 +212,7 @@ cat <<EOF
 The Sysstat scripts are now installed.
 Please check and adjust the configuration. It was installed at:
 
-    $(echo $PREFIX/etc/sysstat.yml)
+    $(echo $PREFIX/etc/sysstat/sysstat.yml)
 
 To start the daemon, use the supplied RC/Init script at:
 
