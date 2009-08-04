@@ -8,8 +8,6 @@ Sload:
 Smemory: 
   ## Prefix for rrd and graph files
   prefix: memory
-  ramtotal: RAM
-  swaptotal: SWAP
 
 
 ## Configuration for network statistics

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006-2008 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,16 @@ class Smain
 
     # Read configuration file and set values in @config hash
     @config = YAML.load(File.open(config))
+    
+    # Set values for available ram and swap
+    if(@config['Smain']['os'] == "freebsd6")
+      @config['Smemory']['ramtotal'] = %x[sysctl -n hw.physmem].to_i/1024
+      @config['Smemory']['swaptotal'] = %x[swapinfo -k | tail -1 | awk '{print $2}'].to_i
+    elsif(@config['Smain']['os'] == "linux2.6")
+      @config['Smemory']['ramtotal'] = %x[cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}'].to_i
+      @config['Smemory']['swaptotal'] = %x[cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}'].to_i
+    end
+    
     
     # Initialize modules
     @config["Smain"]['modules'].each do |modul|

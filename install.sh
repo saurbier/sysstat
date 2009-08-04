@@ -69,12 +69,8 @@ LIBDIR="$PREFIX/lib/sysstat"
 
 # Get Ram, Swap and OS
 if [ `uname -s` = "FreeBSD" ]; then
-    RAM=$(($(sysctl -n hw.physmem) / 1024))
-    SWAP=$(swapinfo -k | tail -1 | awk '{print $2}')
     OS="freebsd6"
 elif [ `uname -s` = "Linux" ]; then
-    RAM=$(cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}')
-    SWAP=$(cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}')
     OS="linux2.6"
 fi
 
@@ -121,9 +117,7 @@ echo "$HDD" >> tmp/sysstat.yml
 echo "
   mounts: " >> tmp/sysstat.yml
 echo "$MOUNTS" >> tmp/sysstat.yml
-cat src/conf/sysstat.part2.yml | \
-    sed "s:RAM:$RAM:" | \
-    sed "s:SWAP:$SWAP:" >> tmp/sysstat.yml
+cat src/conf/sysstat.part2.yml >> tmp/sysstat.yml
 echo "$INTERCONF" >> tmp/sysstat.yml
 cat src/conf/sysstat.part3.yml >> tmp/sysstat.yml
 
