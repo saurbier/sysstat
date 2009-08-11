@@ -29,7 +29,7 @@
 Signal.trap('HUP', 'IGNORE')
 
 @config = "ETCDIR/sysstat.yml"
-$SVERSION = "2.18"
+$SVERSION = "SYSSTAT_VERSION"
 
 # Add lib directories to include path
 $: << "LIBDIR"
@@ -70,7 +70,8 @@ options.each_option do |name, arg|
     when("--version")
       # Display Version
       puts "Sysstat #{$SVERSION}"
-      puts "  (c)2006-2009 Konstantin Saurbier"
+      puts "  COPYRIGHT"
+      puts "  http://konstantin.saurbier.net/software/sysstat"
       Kernel.exit!
   end
 end

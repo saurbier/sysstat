@@ -1,0 +1,424 @@
+#!/usr/bin/env rant -f
+
+# Copyright (c) 2006-2009 Konstantin Saurbier 
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+# AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+
+#import "rubytest"
+#import "rubydoc"
+import "rubypackage"
+import "directedrule"
+import "autoclean"
+#import "md5"
+import "sys/more"
+
+lib_files = sys["src/classes/**/*.rb"]
+html_files = sys["src/html/*"]
+source_files = sys["src/{bin,conf,rc}/*"]
+dist_files = html_files + lib_files + source_files + sys["README", "LICENSE", "CHANGES", "Rantfile", "install.rb"]
+
+version = "2.19"
+
+# Install directories
+prefix = "/usr/local/sysstat"
+
+if(var[:PREFIX])
+  prefix = var[:PREFIX].chomp("/")
+end
+graphdir = prefix + "/output"
+bindir = prefix + "/bin"
+dbdir = prefix + "/db/sysstat"
+etcdir = prefix + "/etc/sysstat"
+libdir = prefix + "/lib/sysstat"
+
+hostname = %x[hostname].chomp
+os = %x[uname -s].downcase.chomp
+if(os == "freebsd")
+  os << "6"
+elsif(os == "linux")
+  os << "2.6"
+end
+
+harddisks = Array.new
+mountpoints = Array.new
+%x[mount | egrep -v "proc|devfs|udev|tmpfs|sysfs|usbfs|devpts|nfs|autofs|union"].each_line do |line|
+  harddisks << line.chomp.split(" ")[0].split("/")[2]
+  mountpoints << line.chomp.split(" ")[2]
+end
+
+# Get network interfaces
+interfaces = Array.new
+%x[ifconfig].each_line do |line|
+  unless(line =~ /^[a-z].*/)
+    next
+  end
+
+  line = line.split(" ")[0].chop
+  if(line =~ /^lo.*/)
+    next
+  elsif(line =~ /^vbox.*/)
+    next
+  else
+    interfaces << line
+  end
+end
+
+desc "Default action (create all files)"
+task :default => :all
+
+desc "Create all files"
+task :all => %w(classes config html rc script)
+
+desc "Install"
+task :install => :all do |t|
+  if(os =~ /freebsd/)
+    sys "install -d -o root -g wheel -m 755 #{bindir}"
+    sys "install -d -o root -g wheel -m 755 #{etcdir}"
+    sys "install -d -o root -g wheel -m 755 #{dbdir}"
+    sys "install -d -o root -g wheel -m 755 #{libdir}"
+    sys "install -d -o root -g wheel -m 755 #{graphdir}"
+
+    sys "install -S -o root -g wheel -m 644 tmp/sysstat.yml #{etcdir}"
+    sys["tmp/S*.rb"].each do |file|
+      sys "install -S -o root -g wheel -m 644 #{file} #{libdir}"
+    end
+    sys "install -S -o root -g wheel -m 755 tmp/sysstat.rb #{bindir}"
+    sys "install -S -o root -g wheel -m 755 tmp/sysstat.sh #{bindir}"
+
+    sys["tmp/*.html"].each do |file|
+      sys "install -S -o root -g wheel -m 644 #{file} #{graphdir}"
+    end
+  elsif(os =~ /linux/)
+    sys "install -d -o root -g root -m 755 #{bindir}"
+    sys "install -d -o root -g root -m 755 #{etcdir}"
+    sys "install -d -o root -g root -m 755 #{dbdir}"
+    sys "install -d -o root -g root -m 755 #{libdir}"
+    sys "install -d -o root -g root -m 755 #{graphdir}"
+
+    sys "install -o root -g root -m 644 tmp/sysstat.yml #{etcdir}"
+    sys["tmp/S*.rb"].each do |file|
+      sys "install -o root -g root -m 644 #{file} #{libdir}"
+    end
+    sys "install -o root -g root -m 755 tmp/sysstat.rb #{bindir}"
+    sys "install -o root -g root -m 755 tmp/sysstat.sh #{bindir}"
+
+    sys["tmp/*.html"].each do |file|
+      sys "install -o root -g root -m 644 #{file} #{graphdir}"
+    end
+  else
+    # do nothing!
+  end
+
+  puts ""
+  puts "----------------------------------------------------------------------------"
+  puts ""
+  puts "Identified operating system: #{os.capitalize}"
+  puts "Identified harddisks: #{harddisks.join(", ")}"
+  puts "Identified mountpoints: #{mountpoints.join(", ")}"
+  puts "Identified network interfaces: #{interfaces.join(", ")}"
+  puts ""
+  puts <<-EOF
+The Sysstat scripts are now installed.
+Please check and adjust the configuration. It was installed at:
+
+    #{prefix}/etc/sysstat/sysstat.yml
+
+To start the daemon, use the supplied RC/Init script at:
+
+    #{prefix}/bin/sysstat.sh
+
+EOF
+end
+
+
+gen Directory, "tmp"
+
+#----------------------------------------------------------------------------
+# Create classes
+#
+ro = gen DirectedRule, "tmp" => sys["src/classes"], :rb => :rb do |t|
+  sys.cp t.source, t.name
+end
+
+desc "Create class files"
+task :classes => ro.candidates
+#
+#----------------------------------------------------------------------------
+
+
+#----------------------------------------------------------------------------
+# Create config
+#
+file "tmp/sysstat.yml" do |t|
+  hdds = ""
+  harddisks.each do |disk|
+    hdds << "  - #{disk}\n"
+  end
+
+  mounts = ""
+  (0..(harddisks.length-1)).each do |i|
+    mounts << "    #{harddisks[i]}: #{mountpoints[i]}\n"
+  end
+
+  interconf = ""
+  interfaces.each do |intf|
+    interconf << "  - #{intf}\n"
+  end
+
+
+  puts "Creating #{t.name}"
+
+  target_file = File.new(t.name, "w+")
+
+  source_file = File.new("src/conf/sysstat.part1.yml", "r")
+  source_file.each_line do |line|
+    line = line.gsub("OS", os)
+    line = line.gsub("LIBDIR", libdir)
+    line = line.gsub("DBDIR", dbdir)
+    target_file << line
+  end
+  source_file.close
+
+
+  target_file << hdds
+  target_file << "\n  mounts: \n"
+  target_file << mounts
+
+  source_file = File.new("src/conf/sysstat.part2.yml", "r")
+  source_file.each_line do |line|
+    target_file << line
+  end
+  source_file.close
+  source_file = nil
+
+  target_file << interconf
+
+  source_file = File.new("src/conf/sysstat.part3.yml", "r")
+  source_file.each_line do |line|
+    target_file << line
+  end
+  source_file.close
+  source_file = nil
+
+  target_file.close
+  target_file = nil
+end
+
+desc "Create configuration"
+task :config => "tmp/sysstat.yml"
+#
+#----------------------------------------------------------------------------
+
+
+#----------------------------------------------------------------------------
+# Create HTML files
+#
+gen Action, /html/ do
+  source "html.rant"
+end
+
+ro = gen DirectedRule, "tmp" => sys["src/html"], :html => :html do |t|
+  puts "Creating #{t.name} from #{t.source}"
+
+  if(t.source =~ /index\.html/)
+    target_file = File.new(t.name, "w+")
+    source_file = File.new(t.source, "r")
+    source_file.each_line do |line|
+      line = line.gsub("HOSTNAME", hostname)
+
+      tmp = ""
+      interfaces.map {|iface| tmp << "<p>\n\t<a href=\"./net-#{iface}.html\"><img border=\"0\" src=\"net-#{iface}-day.png\" alt=\"Network statistics\"></a>\n</p>\n"}
+      line = line.gsub("NETWORK", tmp)
+
+      tmp = ""
+      harddisks.map {|hdd| tmp << "<p>\n\t<a href=\"./hdds-#{hdd}.html\"><img border=\"0\" src=\"hdds-#{hdd}-day.png\" alt=\"HDD statistics\"></a>\n</p>\n"}
+      line = line.gsub("HDD", tmp)
+
+      target_file << line
+    end
+    source_file.close
+    target_file.close
+  else
+    target_file = File.new(t.name, "w+")
+    source_file = File.new(t.source, "r")
+    source_file.each_line do |line|
+      line = line.gsub("HOSTNAME", hostname)
+      target_file << line
+    end
+    source_file.close
+    target_file.close
+  end
+end
+
+file "html.rant" do |t|
+  dependencies = Array.new
+  
+  file = File.new(t.name, "w+")
+  harddisks.each do |hdd|
+    dependencies << "tmp/hdds-#{hdd}.html"
+    
+    file << <<-EOF
+file "tmp/hdds-#{hdd}.html" do |t|
+  puts "Creating tmp/hdds-#{hdd}.html from src/html/hdds.html.tmpl"
+  target_file = File.new(t.name, "w+")
+
+  source_file = File.new("src/html/hdds.html.tmpl", "r")
+  source_file.each_line do |line|
+    line = line.gsub("HOSTNAME", "#{hostname}")
+    line = line.gsub("HDD", "#{hdd}")
+    target_file << line
+  end
+  source_file.close
+
+  target_file.close
+end
+
+EOF
+  end
+
+  interfaces.each do |interface|
+    dependencies << "tmp/net-#{interface}.html"
+    
+    file << <<-EOF
+file "tmp/net-#{interface}.html" do |t|
+  puts "Creating tmp/net-#{interface} from src/html/network.html.tmpl"
+  target_file = File.new(t.name, "w+")
+
+  source_file = File.new("src/html/network.html.tmpl", "r")
+  source_file.each_line do |line|
+    line = line.gsub("HOSTNAME", "#{hostname}")
+    line = line.gsub("INTERFACE", "#{interface}")
+    target_file << line
+  end
+  source_file.close
+
+  target_file.close
+end
+
+EOF
+  end
+  
+  file << <<-EOF
+desc "Create HTML files"
+task :html => ["tmp", "#{dependencies.join("\", \"")}", "#{ro.candidates.join("\", \"")}"]
+
+EOF
+  
+  file.close
+end
+#
+#----------------------------------------------------------------------------
+
+
+#----------------------------------------------------------------------------
+# Create rc-script
+#
+file "tmp/sysstat.sh" do |t|
+  puts "Creating #{t.name} from src/rc/sysstat.sh"
+
+  source_file = File.new("src/rc/sysstat.sh", "r")
+  target_file = File.new(t.name, "w+")
+
+  source_file.each_line do |line|
+    line = line.gsub("BINDIR", bindir)
+    line = line.gsub("COPYRIGHT", "(c)2006-2009 Konstantin Saurbier")
+    line = line.gsub("VERSION", version)
+    target_file << line
+  end
+
+  source_file.close
+  target_file.close
+
+end
+
+desc "Create script"
+task :rc => "tmp/sysstat.sh"
+#
+#----------------------------------------------------------------------------
+
+
+#----------------------------------------------------------------------------
+# Create script
+#
+file "tmp/sysstat.rb" do |t|
+  puts "Creating #{t.name} from src/bin/sysstat.rb"
+
+  source_file = File.new("src/bin/sysstat.rb", "r")
+  target_file = File.new(t.name, "w+")
+
+  source_file.each_line do |line|
+    line = line.gsub("ETCDIR", etcdir)
+    line = line.gsub("LIBDIR", libdir)
+    line = line.gsub("COPYRIGHT", "(c)2006-2009 Konstantin Saurbier")
+    line = line.gsub("SYSSTAT_VERSION", version)
+    target_file << line
+  end
+
+  source_file.close
+  target_file.close
+
+end
+
+desc "Create script"
+task :script => "tmp/sysstat.rb"
+#
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Make release
+#
+task :installer do |t|
+  sys "rant-import --force --auto install.rb"
+end
+  
+desc "Make release"
+task :release => ["installer", "tar"]
+#
+#----------------------------------------------------------------------------
+
+
+#desc "Run unit tests."
+#gen RubyTest do |t|
+#  t.test_dir = "src/tests"
+#  t.pattern = "tc_*.rb"
+#end
+
+#desc "Generate html documentation."
+#gen RubyDoc do |t|
+#  t.opts = %w(--title sysstat --main README README)
+#end
+
+desc "Create tgz-package"
+gen RubyPackage, "sysstat" do |t|  
+  t.name = "sysstat"
+  t.version = version  
+  t.files = dist_files
+  t.tar_task
+end
+
+desc "Remove autogenerated and backup files"
+gen AutoClean, :clean
+

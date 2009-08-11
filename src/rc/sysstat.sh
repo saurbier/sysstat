@@ -66,6 +66,10 @@ case "$1" in
     ;;
 
 '*')
+    echo "Sysstat VERSION"
+    echo "  COPYRIGHT"
+    echo "  http://konstantin.saurbier.net/software/sysstat"
+    echo " "
     echo 'Usage: $0 { start | stop | reload | restart }'
     exit 1
     ;;
