@@ -27,15 +27,11 @@
 # SUCH DAMAGE.
 
 
-#import "rubytest"
-#import "rubydoc"
 import "rubypackage"
 import "directedrule"
 import "autoclean"
-#import "md5"
+import "md5"
 import "sys/more"
-
-#lib_src = sys["src/classes"]
 
 package_files = sys["README", "LICENSE", "CHANGES", "Rantfile", "install.rb"]
 source_files = sys["src/{bin,classes,conf,html,rc}/*"]
@@ -97,8 +93,7 @@ desc "Create all files"
 task :all => ["src/bin/all", "src/classes/all", "src/conf/all", "src/html/all", "src/rc/all"]
 
 desc "Install"
-#task :install => ["src/bin/install", "src/classes/install", "src/conf/install", "src/html/install", "src/rc/install"]
-task :install => ["src/bin/install", "src/classes/install", "src/conf/install", "src/rc/install"]
+task :install => ["src/bin/install", "src/classes/install", "src/conf/install", "src/html/install", "src/rc/install"]
 
 task :install => :all do |t|
   if(var[:os] =~ /freebsd/)
@@ -139,22 +134,10 @@ task :installer do |t|
 end
   
 desc "Make release"
-#task :release => ["installer", "tar"]
-task :release => ["installer"]
+task :release => ["installer", "tar"]
 #
 #----------------------------------------------------------------------------
 
-
-#desc "Run unit tests."
-#gen RubyTest do |t|
-#  t.test_dir = "src/tests"
-#  t.pattern = "tc_*.rb"
-#end
-
-#desc "Generate html documentation."
-#gen RubyDoc do |t|
-#  t.opts = %w(--title sysstat --main README README)
-#end
 
 desc "Create tgz-package"
 gen RubyPackage, "sysstat" do |t|  
