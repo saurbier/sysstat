@@ -1,0 +1,19 @@
+
+# Do nothing
+task :all
+
+task :install => :all do |t|
+  if(var[:os] =~ /freebsd/)
+    sys "install -d -o root -g wheel -m 755 #{var[:libdir]}"
+    sys["S*.rb"].each do |file|
+      sys "install -S -o root -g wheel -m 644 #{file} #{var[:libdir]}"
+    end
+  elsif(var[:os] =~ /linux/)
+    sys "install -d -o root -g root -m 755 #{var[:libdir]}"
+    sys["S*.rb"].each do |file|
+      sys "install -o root -g root -m 644 #{file} #{var[:libdir]}"
+    end
+  end
+end
+
+gen AutoClean, :clean

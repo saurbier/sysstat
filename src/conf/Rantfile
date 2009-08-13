@@ -1,0 +1,69 @@
+
+file "sysstat.yml" do |t|
+  puts "Creating #{t.name}"
+  
+  hdds = ""
+  var[:harddisks].each do |disk|
+    hdds << "  - #{disk}\n"
+  end
+
+  mounts = ""
+  (0..(var[:harddisks].length-1)).each do |i|
+    mounts << "    #{var[:harddisks][i]}: #{var[:mountpoints][i]}\n"
+  end
+
+  interconf = ""
+  var[:interfaces].each do |intf|
+    interconf << "  - #{intf}\n"
+  end
+
+  target_file = File.new(t.name, "w+")
+
+  source_file = File.new("part1.yml.in", "r")
+  source_file.each_line do |line|
+    line = line.gsub("OS", var[:os])
+    line = line.gsub("LIBDIR", var[:libdir])
+    line = line.gsub("DBDIR", var[:dbdir])
+    line = line.gsub("GRAPHDIR", var[:graphdir])
+    target_file << line
+  end
+  source_file.close
+
+
+  target_file << hdds
+  target_file << "\n  mounts: \n"
+  target_file << mounts
+
+  source_file = File.new("part2.yml.in", "r")
+  source_file.each_line do |line|
+    target_file << line
+  end
+  source_file.close
+  source_file = nil
+
+  target_file << interconf
+
+  source_file = File.new("part3.yml.in", "r")
+  source_file.each_line do |line|
+    target_file << line
+  end
+  source_file.close
+  source_file = nil
+
+  target_file.close
+  target_file = nil
+end
+
+task :all => ["sysstat.yml"]
+
+task :install => :all do |t|
+  if(var[:os] =~ /freebsd/)
+    sys "install -d -o root -g wheel -m 755 #{var[:etcdir]}"
+    sys "install -S -o root -g wheel -m 644 sysstat.yml #{var[:etcdir]}"
+  elsif(var[:os] =~ /linux/)
+    sys "install -d -o root -g root -m 755 #{var[:etcdir]}"
+    sys "install -o root -g root -m 644 sysstat.yml #{var[:etcdir]}"
+  end
+end
+
+gen AutoClean, :clean

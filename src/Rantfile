@@ -1,0 +1,6 @@
+
+subdirs "bin"
+subdirs "classes"
+subdirs "conf"
+subdirs "html"
+subdirs "rc"

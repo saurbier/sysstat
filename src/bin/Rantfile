@@ -1,0 +1,33 @@
+
+file "sysstat.rb" do |t|
+  puts "Creating #{t.name}"
+
+  source_file = File.new("#{t.name}.in", "r")
+  target_file = File.new(t.name, "w+")
+
+  source_file.each_line do |line|
+    line = line.gsub("ETCDIR", var[:etcdir])
+    line = line.gsub("LIBDIR", var[:libdir])
+    line = line.gsub("COPYRIGHT", "(c)2006-2009 Konstantin Saurbier")
+    line = line.gsub("SYSSTAT_VERSION", var[:version])
+    target_file << line
+  end
+
+  source_file.close
+  target_file.close
+
+end
+
+task :all => ["sysstat.rb"]
+
+task :install => :all do |t|
+  if(var[:os] =~ /freebsd/)
+    sys "install -d -o root -g wheel -m 755 #{var[:bindir]}"
+    sys "install -S -o root -g wheel -m 755 sysstat.rb #{var[:bindir]}"
+  elsif(var[:os] =~ /linux/)
+    sys "install -d -o root -g root -m 755 #{var[:bindir]}"
+    sys "install -o root -g root -m 755 sysstat.rb #{var[:bindir]}"
+  end
+end
+
+gen AutoClean, :clean
