@@ -1,11 +1,16 @@
 TODO:
-    - Kernel memory statistics (caches+buffers under Linux)
+    - Kernel memory statistics
     - Statistics for various programs (postgresql, apache, postfix,...)
+	- CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly
+	- Output statistics in text-form (via rrdtool fetch)
 
 Version HEAD
-    - Sets values for available ram and swap on startup
-    - Changend Sh based install-script to Ruby+Rant based script
+    - Smain.rb: Sets values for available ram and swap on startup (for Smemory.rb)
+    - Changend Sh based install-script to Ruby+Rant based script (embedded rant into install.rb for compat.)
     - Slight modifications of the config-parts (needed for new installer)
+    - Changed syntax of module.graph(), accepts second argument for output filename
+      returns png-file if filename == "-", else it returns the size of the file (width\nheight)
+    - Snetwork.rb: Merged interface and interface-error graphs
     
 Version 2.18 - 2009-06-27
     - Fixed install.sh (no config created)

@@ -1,19 +1,19 @@
 
 
 ## Configuration for load statistics
-Sload: 
+Sload:
   ## Prefix for rrd and graph files
   prefix: load
 
 
 ## Configuration for memory statistics
-Smemory: 
+Smemory:
   ## Prefix for rrd and graph files
   prefix: memory
 
 
 ## Configuration for network statistics
-Snetwork: 
+Snetwork:
   ## Prefix for rrd and graph files
   prefix: net
 

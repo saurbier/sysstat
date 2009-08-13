@@ -1,7 +1,7 @@
 
 file "sysstat.yml" do |t|
   puts "Creating #{t.name}"
-  
+
   hdds = ""
   var[:harddisks].each do |disk|
     hdds << "  - #{disk}\n"

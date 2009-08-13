@@ -1,6 +1,6 @@
---- 
+---
 ## Main configuration
-Smain: 
+Smain:
   ## Location of the installation
   libdir: LIBDIR
 
@@ -23,7 +23,7 @@ Smain:
   graph_interval: 900
 
   ## Active modules
-  modules: 
+  modules:
   - Sconnections
   - Sdisk
   - Scpu
@@ -35,21 +35,21 @@ Smain:
 
 
 ## Configuration for connection statistics
-Sconnections: 
+Sconnections:
   ## Prefix for rrd and graph files
   prefix: connections
 
 
 ## Configuration for cpu statistics
-Scpu: 
+Scpu:
   ## Prefix for rrd and graph files
   prefix: cpu
 
 
 ## Configuration for disk statistics
-Sdisk: 
+Sdisk:
   ## Prefix for rrd and graph files
   prefix: hdds
 
   ## Graphed discs
-  devices: 
+  devices:

@@ -34,7 +34,7 @@ class Smemory
     @data = Hash.new
     @data['fram'] = 0
     @data['fswap'] = 0
-    
+
     @rrdname = "#{@config['Smain']['dbdir']}/#{@config['Smemory']['prefix']}.rrd"
   end
 
@@ -44,10 +44,10 @@ class Smemory
         @rrdname,
         "--step", "#{@config['Smain']['step']}",
         "--start", "#{Time.now.to_i-1}",
-        "DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
+#        "DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
-        "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U", 
+        "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "RRA:AVERAGE:0.5:1:2160", "RRA:AVERAGE:0.5:5:2016",
         "RRA:AVERAGE:0.5:15:2880", "RRA:AVERAGE:0.5:60:8760")
     end
@@ -65,16 +65,16 @@ class Smemory
       end
 
       # Kernel size
-      output = %x[kldstat]
-      output.each do |line|
-        @data['kram'] += line.split()[3].hex/1024
-      end
+#      output = %x[kldstat]
+#      output.each do |line|
+#        @data['kram'] += line.split()[3].hex/1024
+#      end
 
       # Kernel memory
-      output = %x[vmstat -m]
-      output.each do |line|
-        @data['kram'] += line.split()[2].to_i
-      end
+#      output = %x[vmstat -m]
+#      output.each do |line|
+#        @data['kram'] += line.split()[2].to_i
+#      end
 
       # Swap
       output = %x[swapinfo -k]
@@ -86,18 +86,19 @@ class Smemory
       output = %x[free -k].split("\n")
       @data['uram'] = output[2].split()[2]
       @data['fram'] = output[1].split()[3]
-      @data['kram'] = output[1].split()[6]
+#      @data['kram'] = output[1].split()[6]
       @data['fswap'] = output[3].split()[3]
     end
   end
 
   def write
-    RRD.update(@rrdname, "N:#{@data['kram']}:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
+#    RRD.update(@rrdname, "N:#{@data['kram']}:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
+    RRD.update(@rrdname, "N:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
   end
 
-  def graph(timeframe)
+  def graph(timeframe, filename = nil)
     @time = timeframe
-    
+
     if(@time == "day")
       @start = -86400
       @suffix = "day"
@@ -112,10 +113,16 @@ class Smemory
       @suffix = "year"
     end
 
-    RRD.graph(
-      "#{@config['Smain']['graphdir']}/#{@config['Smemory']['prefix']}-#{@suffix}.png",
+    unless(filename)
+      filename = "#{@config['Smain']['graphdir']}/#{@config['Smemory']['prefix']}-#{@suffix}.png"
+    end
+
+    output = Array.new
+
+    output << RRD.graph(
+      filename,
       "--title", "RAM and Swap usage",
-      "--start", "#{@start}", 
+      "--start", "#{@start}",
       "--interlace",
       "--imgformat", "PNG",
       "--width=600", "--height=150",
@@ -140,6 +147,8 @@ class Smemory
       "GPRINT:uramlast:  %4.3lf %sB",
       "LINE2:fram#55dd55:\tfree RAM\\:",
       "GPRINT:framlast:  %4.3lf %sB\\n")
+
+    return output
   end
 end
 

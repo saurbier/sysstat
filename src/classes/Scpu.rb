@@ -84,9 +84,9 @@ class Scpu
     RRD.update(@rrdname, "N:#{@data['user']}:#{@data['system']}:#{@data['idle']}")
   end
 
-  def graph(timeframe)
+  def graph(timeframe, filename = nil)
     @time = timeframe
-    
+
     if(@time == "day")
       @start = -86400
       @suffix = "day"
@@ -100,11 +100,17 @@ class Scpu
       @start = -31536000
       @suffix = "year"
     end
-    
-    RRD.graph(
-      "#{@config["Smain"]['graphdir']}/#{@config['Scpu']['prefix']}-#{@suffix}.png",
+
+    unless(filename)
+      filename = "#{@config["Smain"]['graphdir']}/#{@config['Scpu']['prefix']}-#{@suffix}.png"
+    end
+
+    output = Array.new
+
+    output << RRD.graph(
+      filename,
       "--title", "CPU usage",
-      "--start", "#{@start}", 
+      "--start", "#{@start}",
       "--interlace",
       "--imgformat", "PNG",
       "--width=600", "--height=150",
@@ -129,6 +135,8 @@ class Scpu
       "AREA:usr#ECD748:User   :STACK", "LINE1:Ln2#C9B215:",
       "VDEF:usrlast=usr,LAST", "GPRINT:usrlast:%3.0lf%%",
       "VDEF:usravg=usr,AVERAGE", "GPRINT:usravg:\t%3.0lf%%",
-      "VDEF:usrmax=usr,MAXIMUM", "GPRINT:usrmax:\t%3.0lf%%\\n") 
+      "VDEF:usrmax=usr,MAXIMUM", "GPRINT:usrmax:\t%3.0lf%%\\n")
+
+    return output
   end
 end

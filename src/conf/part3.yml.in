@@ -1,6 +1,6 @@
 
 ## Configuration for processes statistics
-Sprocesses: 
+Sprocesses:
   ## Prefix for rrd and graph files
   prefix: processes
 

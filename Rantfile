@@ -125,12 +125,22 @@ To start the daemon, use the supplied RC/Init script at:
 EOF
 end
 
+desc "Show help screen"
+task :help do |t|
+  puts "Help screen coming soon!"
+end
+
+task :panic do |t|
+  puts "Don't panic!"
+end
 
 #----------------------------------------------------------------------------
 # Make release
 #
 task :installer do |t|
+  sys.rm_f "./install.rb"
   sys "rant-import --force --auto install.rb"
+  sys.chmod 0755, "./install.rb"
 end
   
 desc "Make release"

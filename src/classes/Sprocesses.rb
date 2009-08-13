@@ -64,9 +64,9 @@ class Sprocesses
     RRD.update(@rrdname, "N:#{@data['processes']}")
   end
 
-  def graph(timeframe)
+  def graph(timeframe, filename = nil)
     @time = timeframe
-    
+
     if(@time == "day")
       @start = -86400
       @suffix = "day"
@@ -81,10 +81,16 @@ class Sprocesses
       @suffix = "year"
     end
 
-    RRD.graph(
-      "#{@config['Smain']['graphdir']}/#{@config['Sprocesses']['prefix']}-#{@suffix}.png",
+    unless(filename)
+      filename = "#{@config['Smain']['graphdir']}/#{@config['Sprocesses']['prefix']}-#{@suffix}.png"
+    end
+
+    output = Array.new
+
+    output << RRD.graph(
+      filename,
       "--title", "Number of processes",
-      "--start", "#{@start}", 
+      "--start", "#{@start}",
       "--interlace",
       "--imgformat", "PNG",
       "--width=600", "--height=150",
@@ -101,6 +107,8 @@ class Sprocesses
       "DEF:maxaus=#{@rrdname}:processes:MAX",
       "VDEF:maxaus1=maxaus,MAXIMUM",
       "GPRINT:maxaus1:maximum\\: %lg\\n")
+
+    return output
   end
 end
 

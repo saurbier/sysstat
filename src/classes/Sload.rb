@@ -81,9 +81,9 @@ class Sload
     RRD.update(@rrdname, "N:#{@data['1min']}:#{@data['5min']}:#{@data['15min']}")
   end
 
-  def graph(timeframe)
+  def graph(timeframe, filename = nil)
     @time = timeframe
-    
+
     if(@time == "day")
       @start = -86400
       @suffix = "day"
@@ -98,10 +98,16 @@ class Sload
       @suffix = "year"
     end
 
-    RRD.graph(
-      "#{@config['Smain']['graphdir']}/#{@config['Sload']['prefix']}-#{@suffix}.png",
+    unless(filename)
+      filename = "#{@config['Smain']['graphdir']}/#{@config['Sload']['prefix']}-#{@suffix}.png"
+    end
+
+    output = Array.new
+
+    output << RRD.graph(
+      filename,
       "--title", "Load Average",
-      "--start", "#{@start}", 
+      "--start", "#{@start}",
       "--interlace",
       "--imgformat", "PNG",
       "--width=600", "--height=150",
@@ -130,6 +136,8 @@ class Sload
       "GPRINT:load15avg:%12.2lf",
       "VDEF:load15max=load15,MAXIMUM",
       "GPRINT:load15max:%12.2lf\\n")
+
+    return output
   end
 end
 

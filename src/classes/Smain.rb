@@ -27,14 +27,14 @@
 
 
 class Smain
-  def initialize(config)
+  def initialize(conffile)
     @childs = Hash.new
     @modules = Hash.new
     @config = Hash.new
 
     # Read configuration file and set values in @config hash
-    @config = YAML.load(File.open(config))
-    
+    @config = YAML.load(File.open(conffile))
+
     # Set values for available ram and swap
     if(@config['Smain']['os'] == "freebsd6")
       @config['Smemory']['ramtotal'] = %x[sysctl -n hw.physmem].to_i/1024
@@ -43,8 +43,8 @@ class Smain
       @config['Smemory']['ramtotal'] = %x[cat /proc/meminfo | grep -w "MemTotal:" | awk '{print $2}'].to_i
       @config['Smemory']['swaptotal'] = %x[cat /proc/meminfo | grep -w "SwapTotal:" | awk '{print $2}'].to_i
     end
-    
-    
+
+
     # Initialize modules
     @config["Smain"]['modules'].each do |modul|
       # Load modules and initialize them
@@ -61,7 +61,7 @@ class Smain
     @childs["data"] = Process.fork do
       # Ignore HANUP signal
       trap('HUP', 'IGNORE')
-      
+
       # Exit on SIGTERM or SIGKILL
       trap("SIGTERM") { Process.exit!(0) }
       trap("SIGKILL") { Process.exit!(0) }
@@ -75,40 +75,40 @@ class Smain
         if(time <= Time.now)
           # Increment time object with @config['step'] seconds
           time = Time.now + @config["Smain"]['step']
-          
+
           # Get and write data for every module
           @config["Smain"]['modules'].each do |modul|
             @modules[modul].get
             @modules[modul].write
           end
         end
-        
+
         # Sleep until next run
         sleep 30
       end
     end
   end
 
-  # Childs for creating graphics 
+  # Childs for creating graphics
   def create_graphs
     @childs["graph"] = Process.fork do
       # Ignore HANUP signal
       trap('HUP', 'IGNORE')
-      
+
       # Exit on SIGTERM or SIGKILL
       trap("SIGTERM") { Process.exit!(0) }
       trap("SIGKILL") { Process.exit!(0) }
 
-      # Initialize time object  
+      # Initialize time object
       time = Time.now
-  
+
       # Create graphs in endless loop
       loop do
         # Check if enough time since last update has gone
         if(time <= Time.now)
           # Increment time object with @config['graph_interval'] seconds
           time = Time.now + @config["Smain"]['graph_interval']
-          
+
           # Create graphs for every module
           @config["Smain"]['modules'].each do |modul|
             @modules[modul].graph("day")
@@ -117,11 +117,19 @@ class Smain
             @modules[modul].graph("year")
           end
         end
-        
+
         # Sleep until next run
         sleep 60
       end
     end
+  end
+
+  def config
+    return @config
+  end
+
+  def modules
+    return @modules
   end
 
   def kill_childs

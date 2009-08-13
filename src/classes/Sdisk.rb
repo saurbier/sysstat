@@ -60,7 +60,7 @@ class Sdisk
   end
 
   def get
-    @config['Sdisk']['devices'].each do |hdd|      
+    @config['Sdisk']['devices'].each do |hdd|
       output = %x[df -m]
       output.each do |line|
         regex = Regexp.new("^/dev/#{hdd}")
@@ -93,11 +93,13 @@ class Sdisk
       @suffix = "year"
     end
 
+    output = Array.new
+
     @config['Sdisk']['devices'].each do |hdd|
-      RRD.graph(
+      output << RRD.graph(
         "#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png",
         "--title", "Usage statistics for #{@config['Sdisk']['mounts'][hdd]} (/dev/#{hdd})",
-        "--start", "#{@start}", 
+        "--start", "#{@start}",
         "--interlace",
         "--imgformat", "PNG",
         "--width=600", "--height=150",
@@ -121,5 +123,7 @@ class Sdisk
         "VDEF:freeavg=free,AVERAGE", "GPRINT:freeavg: %12.3lf %sB",
         "VDEF:freemax=free,MAXIMUM", "GPRINT:freemax: %12.3lf %sB\\n")
     end
+
+    return output
   end
 end

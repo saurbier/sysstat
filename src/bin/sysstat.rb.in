@@ -93,10 +93,10 @@ f.close
 trap("SIGUSR1") do
   # Kill child processes
   @sysstat.kill_childs
-  
+
   # Reinitialize main routines (and configuration)
   @sysstat = Smain.new(@config)
-  
+
   # Restart child processes
   @sysstat.get_data
   @sysstat.create_graphs

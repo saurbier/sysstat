@@ -54,11 +54,11 @@ end
 
 file "html.rant" do |t|
   dependencies = Array.new
-  
+
   file = File.new(t.name, "w+")
   var[:harddisks].each do |hdd|
     dependencies << "hdds-#{hdd}.html"
-    
+
     file << <<-EOF
 file "hdds-#{hdd}.html" do |t|
   puts "Creating hdds-#{hdd}.html"
@@ -80,7 +80,7 @@ EOF
 
   var[:interfaces].each do |interface|
     dependencies << "net-#{interface}.html"
-    
+
     file << <<-EOF
 file "net-#{interface}.html" do |t|
   puts "Creating net-#{interface}"
@@ -105,7 +105,7 @@ EOF
   task :all => ["index.html", "#{var[:html_files].join("\", \"")}"]
 
   EOF
-    
+
   file.close
 end
 
