@@ -1,7 +1,6 @@
 TODO:
     - Kernel memory statistics
     - Statistics for various programs (postgresql, apache, postfix,...)
-	- CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly
 	- Output statistics in text-form (via rrdtool fetch)
 
 Version HEAD
@@ -11,6 +10,7 @@ Version HEAD
     - Changed syntax of module.graph(), accepts second argument for output filename
       returns png-file if filename == "-", else it returns the size of the file (width\nheight)
     - Snetwork.rb: Merged interface and interface-error graphs
+	- CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly - still not activated
     
 Version 2.18 - 2009-06-27
     - Fixed install.sh (no config created)
