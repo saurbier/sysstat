@@ -34,7 +34,7 @@ import "md5"
 import "sys/more"
 
 package_files = sys["README", "LICENSE", "CHANGES", "Rantfile", "install.rb"]
-source_files = sys["src/{bin,classes,conf,html,rc}/*"]
+source_files = sys["{bin,classes,conf,html,rc}/*"]
 dist_files = package_files + source_files
 
 var[:version] = "2.19"
@@ -84,16 +84,20 @@ var[:interfaces] = Array.new
   end
 end
 
-subdirs "src"
+subdirs "bin"
+subdirs "classes"
+subdirs "conf"
+subdirs "html"
+subdirs "rc"
 
 desc "Default action (create all files)"
 task :default => :all
 
 desc "Create all files"
-task :all => ["src/bin/all", "src/classes/all", "src/conf/all", "src/html/all", "src/rc/all"]
+task :all => ["bin/all", "classes/all", "conf/all", "html/all", "rc/all"]
 
 desc "Install"
-task :install => ["src/bin/install", "src/classes/install", "src/conf/install", "src/html/install", "src/rc/install"]
+task :install => ["bin/install", "classes/install", "conf/install", "html/install", "rc/install"]
 
 task :install => :all do |t|
   if(var[:os] =~ /freebsd/)

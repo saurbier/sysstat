@@ -1,7 +1,9 @@
 TODO:
     - Kernel memory statistics
     - Statistics for various programs (postgresql, apache, postfix,...)
-	- Output statistics in text-form (via rrdtool fetch)
+    - Output statistics in text-form (via rrdtool fetch)
+    - Ruby 1.9 compatibility (and rubinius, jruby, macruby, ironruby...)
+    - Maybe Rake is better than Rant?
 
 Version HEAD
     - Smain.rb: Sets values for available ram and swap on startup (for Smemory.rb)
@@ -10,7 +12,8 @@ Version HEAD
     - Changed syntax of module.graph(), accepts second argument for output filename
       returns png-file if filename == "-", else it returns the size of the file (width\nheight)
     - Snetwork.rb: Merged interface and interface-error graphs
-	- CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly - still not activated
+    - CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly - still not activated
+    - Flattened direcotry tree: removed src/
     
 Version 2.18 - 2009-06-27
     - Fixed install.sh (no config created)

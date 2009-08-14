@@ -91,35 +91,37 @@ class Smain
 
   # Childs for creating graphics
   def create_graphs
-    @childs["graph"] = Process.fork do
-      # Ignore HANUP signal
-      trap('HUP', 'IGNORE')
+    if(@config["Smain"]["graphs"] == "interval")
+      @childs["graph"] = Process.fork do
+        # Ignore HANUP signal
+        trap('HUP', 'IGNORE')
 
-      # Exit on SIGTERM or SIGKILL
-      trap("SIGTERM") { Process.exit!(0) }
-      trap("SIGKILL") { Process.exit!(0) }
+        # Exit on SIGTERM or SIGKILL
+        trap("SIGTERM") { Process.exit!(0) }
+        trap("SIGKILL") { Process.exit!(0) }
 
-      # Initialize time object
-      time = Time.now
+        # Initialize time object
+        time = Time.now
 
-      # Create graphs in endless loop
-      loop do
-        # Check if enough time since last update has gone
-        if(time <= Time.now)
-          # Increment time object with @config['graph_interval'] seconds
-          time = Time.now + @config["Smain"]['graph_interval']
+        # Create graphs in endless loop
+        loop do
+          # Check if enough time since last update has gone
+          if(time <= Time.now)
+            # Increment time object with @config['graph_interval'] seconds
+            time = Time.now + @config["Smain"]['graph_interval']
 
-          # Create graphs for every module
-          @config["Smain"]['modules'].each do |modul|
-            @modules[modul].graph("day")
-            @modules[modul].graph("week")
-            @modules[modul].graph("month")
-            @modules[modul].graph("year")
+            # Create graphs for every module
+            @config["Smain"]['modules'].each do |modul|
+              @modules[modul].graph("day")
+              @modules[modul].graph("week")
+              @modules[modul].graph("month")
+              @modules[modul].graph("year")
+            end
           end
-        end
 
-        # Sleep until next run
-        sleep 60
+          # Sleep until next run
+          sleep 60
+        end
       end
     end
   end

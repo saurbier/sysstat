@@ -22,6 +22,10 @@ Smain:
   # (in seconds)
   graph_interval: 900
 
+  ## Graph creation
+  # (cgi or interval)
+  graphs: interval
+
   ## Active modules
   modules:
   - Sconnections

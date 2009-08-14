@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2006-2008 Konstantin Saurbier
+# Copyright (c) 2006-2009 Konstantin Saurbier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
