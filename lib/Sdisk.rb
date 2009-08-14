@@ -78,7 +78,7 @@ class Sdisk
     end
   end
 
-  def graph(time)
+  def graph(time, filename = nil)
     if(time == "day")
       @start = -86400
       @suffix = "day"
@@ -96,6 +96,10 @@ class Sdisk
     output = Array.new
 
     @config['Sdisk']['devices'].each do |hdd|
+      unless(filename == "-")
+        filename = "#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png"
+      end
+      
       output << RRD.graph(
         "#{@config['Smain']['graphdir']}/#{@config['Sdisk']['prefix']}-#{hdd}-#{@suffix}.png",
         "--title", "Usage statistics for #{@config['Sdisk']['mounts'][hdd]} (/dev/#{hdd})",

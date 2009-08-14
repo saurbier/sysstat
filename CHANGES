@@ -3,7 +3,6 @@ TODO:
     - Statistics for various programs (postgresql, apache, postfix,...)
     - Output statistics in text-form (via rrdtool fetch)
     - Ruby 1.9 compatibility (and rubinius, jruby, macruby, ironruby...)
-    - Maybe Rake is better than Rant?
 
 Version HEAD
     - Smain.rb: Sets values for available ram and swap on startup (for Smemory.rb)

@@ -106,7 +106,7 @@ class Snetwork
     end
   end
 
-  def graph(time, filename = nil, interface = nil)
+  def graph(time, filename = nil)
     if(time == "day")
       @start = -86400
       @suffix = "day"
@@ -121,13 +121,13 @@ class Snetwork
       @suffix = "year"
     end
 
-    unless(filename)
-      filename = "#{@config['Smain']['graphdir']}/#{@config['Snetwork']['prefix']}-#{iface}-#{@suffix}.png",
-    end
-
     output = Array.new
 
     @config['Snetwork']['interfaces'].each do |iface|
+      unless(filename == "-")
+        filename = "#{@config['Smain']['graphdir']}/#{@config['Snetwork']['prefix']}-#{iface}-#{@suffix}.png"
+      end
+      
       output << RRD.graph(
         filename,
         "--title", "Network Interface #{iface}",
@@ -141,18 +141,19 @@ class Snetwork
         "--color", "BACK#ffffff",
         "COMMENT:\t\t   Current\t   Average\t  Maximum\t  Datenvolumen\\n",
         "DEF:r=#{@rrdname[iface]}:in:AVERAGE",
-        "DEF:rx=r,8,*",
+        "CDEF:rx=r,8,*",
         "AREA:rx#EA644A:Inbound", "LINE1:rx#CC3118",
         "VDEF:rxlast=rx,LAST", "GPRINT:rxlast: %12.3lf %s",
         "VDEF:rxave=rx,AVERAGE", "GPRINT:rxave:%12.3lf %s",
         "VDEF:rxmax=rx,MAXIMUM", "GPRINT:rxmax:%12.3lf %s",
         "VDEF:rxtotal=r,TOTAL", "GPRINT:rxtotal:%12.1lf %sb\\n",
-        "DEF:rxerr=#{@rrdname[iface]}:ierr:AVERAGE",
+        "DEF:rerr=#{@rrdname[iface]}:ierr:AVERAGE",
+        "CDEF:rxerr=rerr,8,*",
         "LINE1:rxerr#dd0000:Errors in",
         "VDEF:rxerrlast=rxerr,LAST", "GPRINT:rxerrlast: %12.3lf %s",
         "VDEF:rxerrave=rxerr,AVERAGE", "GPRINT:rxerrave:%12.3lf %s",
         "VDEF:rxerrmax=rxerr,MAXIMUM", "GPRINT:rxerrmax:%12.3lf %s",
-        "VDEF:rxerrtotal=rxerr,TOTAL", "GPRINT:rxerrtotal:%12.1lf %sb\\n",
+        "VDEF:rxerrtotal=rerr,TOTAL", "GPRINT:rxerrtotal:%12.1lf %sb\\n",
         "DEF:t=#{@rrdname[iface]}:out:AVERAGE",
         "CDEF:txa=t,-8,*", "CDEF:tx=t,8,*",
         "AREA:txa#EC9D48:Outbound", "LINE1:txa#CC7016",
@@ -160,13 +161,13 @@ class Snetwork
         "VDEF:txave=tx,AVERAGE", "GPRINT:txave:%12.3lf %s",
         "VDEF:txmax=tx,MAXIMUM", "GPRINT:txmax:%12.3lf %s",
         "VDEF:txtotal=t,TOTAL", "GPRINT:txtotal:%12.1lf %sb\\n",
-        "DEF:txerr=#{@rrdname[iface]}:oerr:AVERAGE",
-        "CDEF:txerra=txerr,-1,*",
+        "DEF:terr=#{@rrdname[iface]}:oerr:AVERAGE",
+        "CDEF:txerra=terr,-8,*", "CDEF:txerr=terr,8,*",
         "LINE1:txerra#dd0000:Errors out",
         "VDEF:txerrlast=txerr,LAST", "GPRINT:txerrlast:%12.3lf %s",
         "VDEF:txerrave=txerr,AVERAGE", "GPRINT:txerrave:%12.3lf %s",
         "VDEF:txerrmax=txerr,MAXIMUM", "GPRINT:txerrmax:%12.3lf %s",
-        "VDEF:txerrtotal=txerr,TOTAL", "GPRINT:txerrtotal:%12.1lf %sb\\n")
+        "VDEF:txerrtotal=terr,TOTAL", "GPRINT:txerrtotal:%12.1lf %sb\\n")
     end
 
     return output

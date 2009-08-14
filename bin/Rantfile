@@ -36,7 +36,7 @@ file "sysstat.sh" do |t|
 
 end
 
-task :all => ["sysstat.rb"]
+task :all => ["sysstat.rb", "sysstat.sh"]
 
 task :install => :all do |t|
   if(var[:os] =~ /freebsd/)

@@ -18,6 +18,9 @@ var[:interfaces].each do |interface|
   var[:html_files] << "net-#{interface}.html"
 end
 
+var[:html_files] << "index.html"
+
+
 gen Rule, ".html" => ".html.in" do |t|
   puts "Creating #{t.name}"
 
