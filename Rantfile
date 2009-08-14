@@ -45,7 +45,11 @@ var[:prefix] = "/usr/local/sysstat"
 if(var[:PREFIX])
   var[:prefix] = var[:PREFIX].chomp("/")
 end
+
 var[:graphdir] = var[:prefix] + "/output"
+if(var[:WEBROOT])
+  var[:graphdir] = var[:webroot]
+end
 var[:bindir] = var[:prefix] + "/bin"
 var[:dbdir] = var[:prefix] + "/db/sysstat"
 var[:etcdir] = var[:prefix] + "/etc/sysstat"
@@ -69,19 +73,23 @@ end
 
 # Get network interfaces
 var[:interfaces] = Array.new
-%x[ifconfig].each_line do |line|
-  unless(line =~ /^[a-z].*/)
-    next
-  end
+unless(var[:IFACES])
+  %x[ifconfig].each_line do |line|
+    unless(line =~ /^[a-z].*/)
+      next
+    end
 
-  line = line.split(" ")[0].chop
-  if(line =~ /^lo.*/)
-    next
-  elsif(line =~ /^vbox.*/)
-    next
-  else
-    var[:interfaces] << line
+    line = line.split(" ")[0].chop
+    if(line =~ /^lo.*/)
+      next
+    elsif(line =~ /^vbox.*/)
+      next
+    else
+      var[:interfaces] << line
+    end
   end
+else
+  var[:interfaces] = var[:IFACES].split(",")
 end
 
 subdirs "bin"
@@ -90,19 +98,17 @@ subdirs "html"
 subdirs "lib"
 
 desc "Default action (create all files)"
-task :default => :all
+task :default => :install
 
 desc "Create all files"
-task :all => ["bin/all", "classes/all", "conf/all", "html/all", "rc/all"]
+task :all => ["bin/all", "etc/all", "html/all", "lib/all"]
 
 desc "Install"
-task :install => ["bin/install", "classes/install", "conf/install", "html/install", "rc/install"]
-
-task :install => :all do |t|
+task :install => [:all, "bin/install", "etc/install", "html/install", "lib/install"] do |t|
   if(var[:os] =~ /freebsd/)
-    sys "install -d -o root -g wheel -m 755 #{dbdir}"
+    sys "install -d -o root -g wheel -m 755 #{var[:dbdir]}"
   elsif(var[:os] =~ /linux/)
-    sys "install -d -o root -g root -m 755 #{dbdir}"
+    sys "install -d -o root -g root -m 755 #{var[:dbdir]}"
   else
     # do nothing!
   end
@@ -130,7 +136,23 @@ end
 
 desc "Show help screen"
 task :help do |t|
-  puts "Help screen coming soon!"
+  puts "System statistics install-script"
+  puts " "
+  puts "Usage: install.rb [[variable1] [variable2]...]"
+  puts " "
+  puts "  Variables:"
+  puts "    PREFIX=PATH     Optional install-path. Default: /usr/local/sysstat"
+  puts " "
+  puts "    IFACES=LIST     Optional comma separated list of interfaces"
+  puts "                    which should be included by sysstat."
+  puts "                    E.g.: IFACES=\"eth0,eth1\""
+  puts " "
+  puts "    WEBROOT=PATH    Optional path to the public-directory. Used for"
+  puts "                    html and graphics files. Default: PREFIX/output"
+  puts " "
+  puts "  Example:"
+  puts "    install.rb PREFIX=/usr/local/sysstat IFACES=\"fxp0,tun0\""
+  puts " "
 end
 
 task :panic do |t|
@@ -140,14 +162,14 @@ end
 #----------------------------------------------------------------------------
 # Make release
 #
-task :installer do |t|
+file "install.rb" do |t|
   sys.rm_f "./install.rb"
-  sys "rant-import --force --auto install.rb"
+  sys "rant-import --auto install.rb"
   sys.chmod 0755, "./install.rb"
 end
   
 desc "Make release"
-task :release => ["installer", "tar"]
+task :release => ["install.rb", "tar"]
 #
 #----------------------------------------------------------------------------
 
