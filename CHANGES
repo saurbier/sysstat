@@ -13,7 +13,7 @@ Version HEAD
       returns png-file if filename == "-", else it returns the size of the file (width\nheight)
     - Snetwork.rb: Merged interface and interface-error graphs
     - CGI-Script (e.g. or like rrdcgi) to generate graphs on the fly - still not activated
-    - Flattened direcotry tree: removed src/
+    - Flattened direcotry tree and cleanup: removed src/, classes/->etc/, conf/->etc/, removed rc/
     
 Version 2.18 - 2009-06-27
     - Fixed install.sh (no config created)

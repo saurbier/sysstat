@@ -34,7 +34,7 @@ import "md5"
 import "sys/more"
 
 package_files = sys["README", "LICENSE", "CHANGES", "Rantfile", "install.rb"]
-source_files = sys["{bin,classes,conf,html,rc}/*"]
+source_files = sys["{bin,etc,html,lib}/*"]
 dist_files = package_files + source_files
 
 var[:version] = "2.19"
@@ -85,10 +85,9 @@ var[:interfaces] = Array.new
 end
 
 subdirs "bin"
-subdirs "classes"
-subdirs "conf"
+subdirs "etc"
 subdirs "html"
-subdirs "rc"
+subdirs "lib"
 
 desc "Default action (create all files)"
 task :default => :all
