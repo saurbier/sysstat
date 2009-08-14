@@ -4,7 +4,7 @@ TODO:
     - Output statistics in text-form (via rrdtool fetch)
     - Ruby 1.9 compatibility (and rubinius, jruby, macruby, ironruby...)
 
-Version HEAD
+Version 2.19 - 2009-06-14
     - Smain.rb: Sets values for available ram and swap on startup (for Smemory.rb)
     - Changend Sh based install-script to Ruby+Rant based script (embedded rant into install.rb for compat.)
     - Slight modifications of the config-parts (needed for new installer)
