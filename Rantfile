@@ -1,6 +1,6 @@
 #!/usr/bin/env rant -f
 
-# Copyright (c) 2006-2009 Konstantin Saurbier 
+# Copyright (c) 2006-2013 Konstantin Saurbier 
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ package_files = sys["README", "LICENSE", "CHANGES", "Rantfile", "install.rb"]
 source_files = sys["{bin,etc,html,lib}/*"]
 dist_files = package_files + source_files
 
-var[:version] = "2.19"
+var[:version] = "2.20"
 
 # Install directories
 var[:prefix] = "/usr/local/sysstat"
@@ -56,11 +56,6 @@ var[:libdir] = var[:prefix] + "/lib/sysstat"
 
 var[:hostname] = %x[hostname].chomp
 var[:os] = %x[uname -s].downcase.chomp
-if(var[:os] == "freebsd")
-  var[:os] << "6"
-elsif(var[:os] == "linux")
-  var[:os] << "2.6"
-end
 
 var[:harddisks] = Array.new
 var[:mountpoints] = Array.new

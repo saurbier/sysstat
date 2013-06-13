@@ -11,7 +11,7 @@ Smain:
   graphdir: GRAPHDIR
 
   ## Operating System
-  # One of freebsd6, linux2.6
+  # One of freebsd, linux
   os: OS
 
   ## Time between data gathering steps

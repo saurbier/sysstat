@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2013 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,16 +60,16 @@ class Scpu
 
     sleep 5
 
-    if(@config['Smain']['os'] == "freebsd6")
-      output = %x[vmstat -c 4 -w 1 -p proc]
+    if(@config['Smain']['os'] =~ "freebsd")
+      output = %x[vmstat -c 4 -w 1 -p proc].split("\n")
       output.each do |line|
         linea = line.split
         @data['idle'] = linea[16]
         @data['system'] = linea[15]
         @data['user'] = linea[14]
       end
-    elsif(@config['Smain']['os'] == "linux2.6")
-      output = %x[vmstat]
+    elsif(@config['Smain']['os'] =~ "linux")
+      output = %x[vmstat].split("\n")
       outpu.each do |line|
         linea = line.split
         @data['idle'] = linea[14]

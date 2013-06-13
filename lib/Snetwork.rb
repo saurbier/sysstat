@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2013 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,8 +64,8 @@ class Snetwork
 
   def get
     @config['Snetwork']['interfaces'].each do |interface|
-      if(@config['Smain']['os'] == "freebsd6")
-        output = %x[netstat -ib]
+      if(@config['Smain']['os'] =~ "freebsd")
+        output = %x[netstat -ib].split("\n")
         output.each do |line|
           regex = Regexp.new(interface)
           if(line =~ regex and line =~ /Link/ and interface =~ /lo/ and interface =~ /tun/)
@@ -79,8 +80,8 @@ class Snetwork
             @data[interface]['oerr'] = line.split()[8]
           end
         end
-      elsif(@config['Smain']['os'] == "linux2.6")
-        output = %x[ifconfig #{interface}]
+      elsif(@config['Smain']['os'] =~ "linux")
+        output = %x[ifconfig #{interface}].split("\n")
         output.each do |line|
           if(line =~ /bytes/)
             linea = line.split()

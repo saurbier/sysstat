@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2013 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +43,6 @@ class Smemory
         @rrdname,
         "--step", "#{@config['Smain']['step']}",
         "--start", "#{Time.now.to_i-1}",
-#        "DS:kram:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "DS:uram:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "DS:fram:GAUGE:#{@config['Smain']['step']+60}:0:U",
         "DS:swap:GAUGE:#{@config['Smain']['step']+60}:0:U",
@@ -52,9 +52,9 @@ class Smemory
   end
 
   def get
-    if(@config['Smain']['os'] == "freebsd6")
+    if(@config['Smain']['os'] =~ "freebsd")
       # Ram
-      output = %x[vmstat]
+      output = %x[vmstat].split("\n")
       output.each do |line|
         linea = line.split()
         @data['uram'] = linea[3].to_i
@@ -62,35 +62,21 @@ class Smemory
         linea = nil
       end
 
-      # Kernel size
-#      output = %x[kldstat]
-#      output.each do |line|
-#        @data['kram'] += line.split()[3].hex/1024
-#      end
-
-      # Kernel memory
-#      output = %x[vmstat -m]
-#      output.each do |line|
-#        @data['kram'] += line.split()[2].to_i
-#      end
-
       # Swap
-      output = %x[swapinfo -k]
+      output = %x[swapinfo -k].split("\n")
       output.each do |line|
         @data['fswap'] = line.split()[3].to_i
       end
       output = nil
-    elsif(@config['Smain']['os'] == "linux2.6")
+    elsif(@config['Smain']['os'] =~ "linux")
       output = %x[free -k].split("\n")
       @data['uram'] = output[2].split()[2]
       @data['fram'] = output[1].split()[3]
-#      @data['kram'] = output[1].split()[6]
       @data['fswap'] = output[3].split()[3]
     end
   end
 
   def write
-#    RRD.update(@rrdname, "N:#{@data['kram']}:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
     RRD.update(@rrdname, "N:#{@data['uram']}:#{@data['fram']}:#{@data['fswap']}")
   end
 

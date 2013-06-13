@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier
+# Copyright (c) 2006-2013 Konstantin Saurbier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,7 +56,7 @@ class Sconnections
     @data['udp'] = 0
     @data['tcp'] = 0
 
-    output = %x[netstat -n]
+    output = %x[netstat -n].split("\n")
     output.each do |line|
       if(line =~ /tcp/)
         @data['tcp'] += 1

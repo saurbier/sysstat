@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2013 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,8 +55,8 @@ class Sload
   end
 
   def get
-    if(@config['Smain']['os'] == "freebsd6")
-      output = %x[LANG="en_US.8859-15" sysctl vm.loadavg]
+    if(@config['Smain']['os'] =~ "freebsd")
+      output = %x[LANG="en_US.8859-15" sysctl vm.loadavg].split("\n")
       output.each do |line|
         linea = line.split
         @data['1min'] = linea[2]
@@ -63,7 +64,7 @@ class Sload
         @data['15min'] = linea[4]
       end
 
-    elsif(@config['Smain']['os'] == "linux2.6")
+    elsif(@config['Smain']['os'] =~ "linux")
       output = File.new("/proc/loadavg", "r")
       output.each_line do |line|
         linea = line.split

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
-# Copyright (c) 2006-2009 Konstantin Saurbier <konstantin@saurbier.net>
+# Copyright (c) 2006-2013 Konstantin Saurbier <konstantin@saurbier.net>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,7 +53,7 @@ class Sprocesses
   def get
     @data['processes'] = 0
 
-    output = %x[ps hax]
+    output = %x[ps hax].split("\n")
     output.each do |line|
       @data['processes'] += 1
     end
